@@ -191,4 +191,21 @@ export class Property extends BaseEntity {
     },
   })
   tags?: Tag[];
+
+  @ManyToMany(() => Image, (image) => image.properties, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'CASCADE',
+  })
+  @JoinTable({
+    name: 'properties_images',
+    joinColumn: {
+      name: 'property_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'image_id',
+      referencedColumnName: 'id',
+    },
+  })
+  images?: Image[];
 }
