@@ -5,6 +5,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AuthAdminModule } from './modules/auth-admin/auth-admin.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import ormconfig from './database/ormconfig';
+import { PropertyModule } from './modules/property/property.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import ormconfig from './database/ormconfig';
     HealthcheckModule,
     AdminModule,
     AuthAdminModule,
+    PropertyModule,
   ],
   controllers: [],
   providers: [AppService],

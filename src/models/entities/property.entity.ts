@@ -4,9 +4,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Tag } from './tag.entity';
+import { Image } from './image.entity';
 
 @Entity({ name: 'properties' })
 export class Property extends BaseEntity {
@@ -43,12 +47,6 @@ export class Property extends BaseEntity {
     nullable: false,
   })
   availability: string;
-
-  @Column({
-    type: 'varchar',
-    nullable: true,
-  })
-  tags: string;
 
   @Column({
     type: 'varchar',
@@ -145,7 +143,7 @@ export class Property extends BaseEntity {
     nullable: false,
     default: false,
   })
-  furnished: number;
+  furnished: boolean;
 
   @Column({
     type: 'varchar',
@@ -176,4 +174,21 @@ export class Property extends BaseEntity {
     name: 'deleted_at',
   })
   deletedAt: Date;
+
+  @ManyToMany(() => Tag, (tag) => tag.properties, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'CASCADE',
+  })
+  @JoinTable({
+    name: 'properties_tags',
+    joinColumn: {
+      name: 'property_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'tag_id',
+      referencedColumnName: 'id',
+    },
+  })
+  tags?: Tag[];
 }
