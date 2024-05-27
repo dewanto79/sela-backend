@@ -46,7 +46,7 @@ export class ResponseInterceptor implements NestInterceptor {
                 message: message,
                 result: errorData,
               },
-              error.getStatus(),
+              statusCode,
               { cause: error },
             ),
         );

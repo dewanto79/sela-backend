@@ -1,10 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmpty, ValidateNested } from 'class-validator';
 
 class Tag {
-  @ApiProperty()
+  @ApiProperty({ nullable: false })
+  @IsNotEmpty({ message: 'Tag name should not be empty' })
   name: string;
+}
+
+class Facility {
+  @ApiProperty({ nullable: false })
+  @IsNotEmpty({ message: 'Facility name should not be empty' })
+  name: string;
+}
+
+class Image {
+  
 }
 
 export class CreatePropertyDto {
@@ -131,4 +142,20 @@ export class CreatePropertyDto {
   @ValidateNested({ each: true })
   @Type(() => Tag)
   tags: [Tag];
+
+  @ApiProperty({
+    type: () => [Facility],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Facility)
+  facilities: [Facility];
+
+  @ApiProperty({
+    type: () => [Image],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Image)
+  images: [Image];
 }

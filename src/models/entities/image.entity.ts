@@ -4,7 +4,9 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -18,6 +20,7 @@ export class Image extends BaseEntity {
   @Column({
     type: 'varchar',
     nullable: false,
+    name: 'document_id',
   })
   documentId: string;
 
@@ -65,9 +68,7 @@ export class Image extends BaseEntity {
   })
   deletedAt: Date;
 
-  @ManyToMany(() => Property, (property) => property.images, {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
-  })
-  properties?: Property[];
+  @ManyToOne(() => Property, (property) => property.images)
+  @JoinColumn({ name: 'document_id' })
+  properties: Property;
 }

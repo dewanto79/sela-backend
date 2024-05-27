@@ -5,10 +5,23 @@ import { Admin } from './entities/admin.entity';
 import { Property } from './entities/property.entity';
 import { Tag } from './entities/tag.entity';
 import { PropertyTag } from './entities/property-tag.entity';
+import { PropertyFacility } from './entities/property-facility.entity';
+import { Facility } from './entities/facility.entity';
+import { Image } from './entities/image.entity';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([Admin, Property, Tag, PropertyTag])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Admin,
+      Property,
+      Tag,
+      PropertyTag,
+      Image,
+      Facility,
+      PropertyFacility,
+    ]),
+  ],
   providers: [RepositoryService],
   exports: [RepositoryService],
 })

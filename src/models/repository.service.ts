@@ -5,6 +5,9 @@ import { Admin } from './entities/admin.entity';
 import { Property } from './entities/property.entity';
 import { Tag } from './entities/tag.entity';
 import { PropertyTag } from './entities/property-tag.entity';
+import { Image } from './entities/image.entity';
+import { Facility } from './entities/facility.entity';
+import { PropertyFacility } from './entities/property-facility.entity';
 
 @Injectable()
 export default class RepositoryService {
@@ -24,5 +27,14 @@ export default class RepositoryService {
 
     @InjectRepository(PropertyTag)
     public readonly propertyTagRepo: Repository<PropertyTag>,
+
+    @InjectRepository(Image)
+    public readonly imageRepo: Repository<Image>,
+
+    @InjectRepository(Facility)
+    public readonly facilityRepo: Repository<Facility>,
+
+    @InjectRepository(PropertyFacility)
+    public readonly PropertyFacilityRepo: Repository<PropertyFacility>,
   ) {}
 }

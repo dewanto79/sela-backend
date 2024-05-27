@@ -4,13 +4,18 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Tag } from './tag.entity';
 import { Image } from './image.entity';
+import { Facility } from './facility.entity';
+import { Address } from './address.entity';
 
 @Entity({ name: 'properties' })
 export class Property extends BaseEntity {
@@ -148,6 +153,7 @@ export class Property extends BaseEntity {
   @Column({
     type: 'varchar',
     name: 'address_id',
+    nullable: true,
   })
   addressId: string;
 
@@ -175,6 +181,10 @@ export class Property extends BaseEntity {
   })
   deletedAt: Date;
 
+  @OneToOne(() => Address)
+  @JoinColumn({ name: 'address_id' })
+  address: Address;
+
   @ManyToMany(() => Tag, (tag) => tag.properties, {
     onDelete: 'NO ACTION',
     onUpdate: 'CASCADE',
@@ -192,20 +202,24 @@ export class Property extends BaseEntity {
   })
   tags?: Tag[];
 
-  @ManyToMany(() => Image, (image) => image.properties, {
+  @OneToMany(() => Image, (image) => image.properties)
+  @JoinColumn({ name: 'id' })
+  images?: Image[];
+
+  @ManyToMany(() => Facility, (facility) => facility.properties, {
     onDelete: 'NO ACTION',
     onUpdate: 'CASCADE',
   })
   @JoinTable({
-    name: 'properties_images',
+    name: 'properties_facilities',
     joinColumn: {
       name: 'property_id',
       referencedColumnName: 'id',
     },
     inverseJoinColumn: {
-      name: 'image_id',
+      name: 'facility_id',
       referencedColumnName: 'id',
     },
   })
-  images?: Image[];
+  facilities?: Facility[];
 }
