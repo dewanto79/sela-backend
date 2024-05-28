@@ -8,6 +8,7 @@ import { PropertyTag } from './entities/property-tag.entity';
 import { PropertyFacility } from './entities/property-facility.entity';
 import { Facility } from './entities/facility.entity';
 import { Image } from './entities/image.entity';
+import { Address } from './entities/address.entity';
 
 @Global()
 @Module({
@@ -20,6 +21,7 @@ import { Image } from './entities/image.entity';
       Image,
       Facility,
       PropertyFacility,
+      Address,
     ]),
   ],
   providers: [RepositoryService],
