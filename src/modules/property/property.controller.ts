@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
 } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { UpdatePropertyStatusDto } from './dto/update-status.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -30,16 +32,11 @@ export class PropertyController {
     return await this.propertyService.findOne(id);
   }
 
-  @Patch(':id')
-  async update(
+  @Put(':id')
+  async updateStatus(
     @Param('id') id: string,
-    @Body() updatePropertyDto: UpdatePropertyDto,
+    @Body() payload: UpdatePropertyStatusDto,
   ) {
-    return await this.propertyService.update(id, updatePropertyDto);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.propertyService.remove(id);
+    return await this.propertyService.updateStatus(id, payload);
   }
 }

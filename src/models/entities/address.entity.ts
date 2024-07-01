@@ -32,11 +32,13 @@ export class Address extends BaseEntity {
 
   @Column({
     type: 'varchar',
+    nullable: true,
   })
   detail: string;
 
   @Column({
     type: 'text',
+    nullable: true,
   })
   locationMaps: string;
 

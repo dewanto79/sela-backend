@@ -4,9 +4,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Property } from './property.entity';
 
 @Entity({ name: 'images' })
 export class Image extends BaseEntity {
@@ -16,6 +20,7 @@ export class Image extends BaseEntity {
   @Column({
     type: 'varchar',
     nullable: false,
+    name: 'document_id',
   })
   documentId: string;
 
@@ -62,4 +67,8 @@ export class Image extends BaseEntity {
     name: 'deleted_at',
   })
   deletedAt: Date;
+
+  @ManyToOne(() => Property, (property) => property.images)
+  @JoinColumn({ name: 'document_id' })
+  properties: Property;
 }

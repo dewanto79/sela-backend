@@ -1,10 +1,64 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNotEmptyObject,
+  IsUrl,
+  ValidateNested,
+} from 'class-validator';
 
 class Tag {
-  @ApiProperty()
+  @ApiProperty({ nullable: false })
+  @IsNotEmpty({ message: 'name should not be empty' })
   name: string;
+}
+
+class Facility {
+  @ApiProperty({ nullable: false })
+  @IsNotEmpty({ message: 'name should not be empty' })
+  name: string;
+}
+
+class Image {
+  @ApiProperty({ nullable: false, default: 'normal' })
+  @IsNotEmpty({ message: 'type should not be empty' })
+  type: string;
+
+  @ApiProperty({
+    nullable: false,
+    default: 'https://avatars.githubusercontent.com/u/91001646?s=48&v=4',
+  })
+  @IsNotEmpty({ message: 'url should not be empty' })
+  @IsUrl({}, { message: 'image url must be a url' })
+  url: string;
+}
+
+class CreateAddressDto {
+  @ApiProperty({
+    nullable: false,
+  })
+  @IsNotEmpty({ message: 'subdistrict should not be empty' })
+  subdistrict: string;
+
+  @ApiProperty({
+    nullable: false,
+  })
+  @IsNotEmpty({ message: 'regency should not be empty' })
+  regency: string;
+
+  @ApiProperty({
+    nullable: false,
+    default: 'Bali',
+  })
+  @IsNotEmpty({ message: 'province should not be empty' })
+  province: string;
+
+  @ApiProperty()
+  detail: string;
+
+  @ApiProperty()
+  locationMaps: string;
 }
 
 export class CreatePropertyDto {
@@ -120,9 +174,16 @@ export class CreatePropertyDto {
   furnished: boolean;
 
   @ApiProperty({
-    type: 'string',
+    type: () => CreateAddressDto,
   })
-  addressId: string;
+  @Type(() => CreateAddressDto)
+  @ValidateNested({ each: true })
+  @IsNotEmpty({ message: 'Address should not be empty' })
+  @IsNotEmptyObject(
+    { nullable: false },
+    { message: 'Address should not be empty object' },
+  )
+  address: CreateAddressDto;
 
   @ApiProperty({
     type: () => [Tag],
@@ -131,4 +192,20 @@ export class CreatePropertyDto {
   @ValidateNested({ each: true })
   @Type(() => Tag)
   tags: [Tag];
+
+  @ApiProperty({
+    type: () => [Facility],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Facility)
+  facilities: [Facility];
+
+  @ApiProperty({
+    type: () => [Image],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Image)
+  images: [Image];
 }

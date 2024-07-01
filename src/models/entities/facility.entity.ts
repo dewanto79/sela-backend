@@ -4,9 +4,11 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Property } from './property.entity';
 
 @Entity({ name: 'facilities' })
 export class Facility extends BaseEntity {
@@ -49,4 +51,10 @@ export class Facility extends BaseEntity {
     name: 'deleted_at',
   })
   deletedAt: Date;
+
+  @ManyToMany(() => Property, (property) => property.facilities, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  properties?: Property[];
 }

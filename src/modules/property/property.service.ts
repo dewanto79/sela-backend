@@ -3,12 +3,21 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import RepositoryService from 'src/models/repository.service';
 import { Tag } from 'src/models/entities/tag.entity';
+import { Property } from 'src/models/entities/property.entity';
+import { UpdatePropertyStatusDto } from './dto/update-status.dto';
 
 @Injectable()
 export class PropertyService {
   public constructor(private readonly repoService: RepositoryService) {}
 
   async create(payload: CreatePropertyDto) {
+    const addressData = await this.repoService.addressRepo.save({
+      subdistrict: payload.address.subdistrict,
+      regency: payload.address.regency,
+      province: payload.address.province,
+      detail: payload.address.detail ?? null,
+      locationMaps: payload.address.locationMaps ?? null,
+    });
     const propertyData = await this.repoService.propertyRepo.save({
       title: payload.title,
       description: payload.description,
@@ -28,8 +37,9 @@ export class PropertyService {
       buildingOrientation: payload.buildingOrientation,
       electricity: payload.electricity,
       furnished: payload.furnished,
-      addressId: payload.addressId,
+      addressId: addressData.id,
     });
+
     const savedTag = [];
     if (payload.tags.length > 0) {
       const propertyTag = [];
@@ -38,7 +48,7 @@ export class PropertyService {
           where: { name: tag.name },
         });
         if (!tagData) {
-          tagData = await this.repoService.tagRepo.save(tag);
+          tagData = await this.repoService.tagRepo.save({ name: tag.name });
         }
         savedTag.push(tagData);
 
@@ -52,13 +62,59 @@ export class PropertyService {
       await this.repoService.propertyTagRepo.save(propertyTag);
     }
 
-    return { ...propertyData, tags: savedTag };
+    const savedFacility = [];
+    if (payload.facilities.length > 0) {
+      const propertyFacility = [];
+      for (const facility of payload.facilities) {
+        let facilityData = await this.repoService.facilityRepo.findOne({
+          where: { name: facility.name },
+        });
+        if (!facilityData) {
+          facilityData = await this.repoService.facilityRepo.save({
+            name: facility.name,
+          });
+        }
+        savedFacility.push(facilityData);
+
+        propertyFacility.push(
+          this.repoService.propertyFacilityRepo.create({
+            propertyId: propertyData.id,
+            facilityId: facilityData.id,
+          }),
+        );
+      }
+      await this.repoService.propertyFacilityRepo.save(propertyFacility);
+    }
+
+    const savedImage = [];
+    if (payload.images.length > 0) {
+      for (const image of payload.images) {
+        const imageData = this.repoService.imageRepo.create({
+          url: image.url,
+          type: image.type,
+          documentId: propertyData.id,
+        });
+        savedImage.push(imageData);
+      }
+      await this.repoService.imageRepo.save(savedImage);
+    }
+
+    return {
+      ...propertyData,
+      address: addressData,
+      tags: savedTag,
+      facilities: savedFacility,
+      images: savedImage,
+    };
   }
 
   async findAll() {
     const property = await this.repoService.propertyRepo
       .createQueryBuilder('property')
+      .leftJoinAndSelect('property.address', 'address')
       .leftJoinAndSelect('property.tags', 'tags')
+      .leftJoinAndSelect('property.facilities', 'facilities')
+      .leftJoinAndSelect('property.images', 'images')
       .getMany();
     return property;
   }
@@ -66,23 +122,22 @@ export class PropertyService {
   async findOne(id: string) {
     const property = await this.repoService.propertyRepo
       .createQueryBuilder('property')
+      .leftJoinAndSelect('property.address', 'address')
       .leftJoinAndSelect('property.tags', 'tags')
+      .leftJoinAndSelect('property.facilities', 'facilities')
+      .leftJoinAndSelect('property.images', 'images')
       .where('property.id = :id', { id: id })
       .getOne();
-
-    if (!property) {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          errorCode: 'PROPERTY_NOT_FOUND',
-          message: 'property not found',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    return await this.isPropertyExist(property);
   }
 
   async update(id: string, payload: UpdatePropertyDto) {
+    const property = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .where('property.id = :id', { id: id })
+      .getOne();
+    await this.isPropertyExist(property);
+
     await this.repoService.propertyTagRepo.delete({ propertyId: id });
 
     const tagIds: Tag[] = [];
@@ -97,7 +152,7 @@ export class PropertyService {
         tagIds.push(tagData);
       }
     }
-    const propertyData = await this.repoService.propertyRepo.update(id, {
+    await this.repoService.propertyRepo.update(id, {
       title: payload.title,
       description: payload.description,
       price: payload.price,
@@ -116,7 +171,7 @@ export class PropertyService {
       buildingOrientation: payload.buildingOrientation,
       electricity: payload.electricity,
       furnished: payload.furnished,
-      addressId: payload.addressId,
+      // addressId: payload.addressId,
     });
     if (tagIds.length > 0) {
       const propertyTag = [];
@@ -130,10 +185,34 @@ export class PropertyService {
       }
       await this.repoService.propertyTagRepo.save(propertyTag);
     }
-    return { ...propertyData, tags: tagIds };
+    return { ...property, tags: tagIds };
   }
 
-  async remove(id: string) {
-    return `This action removes a #${id} property`;
+  async updateStatus(id: string, payload: UpdatePropertyStatusDto) {
+    const property = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .where('property.id = :id', { id: id })
+      .getOne();
+    await this.isPropertyExist(property);
+
+    await this.repoService.propertyRepo.update(id, {
+      status: payload.status,
+    });
+
+    return property;
+  }
+
+  async isPropertyExist(property: Property): Promise<Property> {
+    if (!property) {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          errorCode: 'PROPERTY_NOT_FOUND',
+          message: 'property not found',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return property;
   }
 }
