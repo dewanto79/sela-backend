@@ -3,7 +3,6 @@ import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import RepositoryService from 'src/models/repository.service';
 import { Admin } from 'src/models/entities/admin.entity';
-import { RequestAdmin } from './dto/admin.interface';
 import {
   IPaginationOptions,
   paginate,
@@ -14,9 +13,10 @@ import {
 export class AdminService {
   public constructor(private readonly repoService: RepositoryService) {}
 
-  async getOneAdminByData(payload: RequestAdmin): Promise<Admin> {
+  async getByEmail(email: string): Promise<Admin> {
     const admin = await this.repoService.adminRepo.findOne({
-      where: payload,
+      where: { email: email },
+      select: ['id', 'email', 'name', 'password', 'role'],
     });
 
     if (admin) {
@@ -25,21 +25,25 @@ export class AdminService {
     throw new HttpException(
       {
         status: HttpStatus.NOT_FOUND,
-        error_code: 'USER_NOT_FOUND',
-        message: 'User with this email does not exist',
+        errorCode: 'ADMIN_NOT_FOUND',
+        message: 'Admin not found',
       },
       HttpStatus.NOT_FOUND,
     );
   }
 
   async create(payload: CreateAdminDto): Promise<Admin> {
-    const newUser = this.repoService.adminRepo.create(payload);
-    await this.repoService.adminRepo.save(newUser);
-    return newUser;
+    return await this.repoService.adminRepo.save({
+      email: payload.email,
+      name: payload.name,
+      role: payload.role,
+      status: 'active',
+      password: payload.password,
+    });
   }
 
-  async update(id: string, payload: UpdateAdminDto): Promise<Admin> {
-    const admin = await this.findOne(id);
+  async update(id: string, payload: UpdateAdminDto) {
+    await this.findOne(id);
 
     this.repoService.adminRepo.update(
       { id: id },
@@ -51,15 +55,9 @@ export class AdminService {
         status: payload.status,
       },
     );
+    payload.password = undefined;
 
-    // update data for return
-    admin.name = payload.name;
-    admin.email = payload.email;
-    admin.role = payload.role;
-    admin.password = payload.password;
-    admin.status = payload.status;
-
-    return admin;
+    return payload;
   }
 
   async findAll(
@@ -86,7 +84,7 @@ export class AdminService {
       throw new HttpException(
         {
           status: HttpStatus.NOT_FOUND,
-          error_code: 'ADMIN_NOT_FOUND',
+          errorCode: 'ADMIN_NOT_FOUND',
           message: 'data not found on system',
         },
         HttpStatus.NOT_FOUND,
