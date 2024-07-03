@@ -27,8 +27,13 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('profile')
-  async findOne(@Request() req) {
+  async profile(@Request() req) {
     return this.adminService.findOne(req.user.id);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.adminService.findOne(id);
   }
 
   @Get()
