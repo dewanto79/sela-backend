@@ -30,9 +30,31 @@ export class Property extends BaseEntity {
 
   @Column({
     type: 'text',
-    nullable: false,
+    nullable: true,
+    name: 'description_id',
   })
-  description: string;
+  descriptionId: string;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+    name: 'key_feature_id',
+  })
+  keyFeatureId: string;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+    name: 'description_en',
+  })
+  descriptionEn: string;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+    name: 'key_feature_en',
+  })
+  keyFeatureEn: string;
 
   @Column({
     type: 'decimal',
@@ -149,6 +171,13 @@ export class Property extends BaseEntity {
     default: false,
   })
   furnished: boolean;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    name: 'google_drive_url',
+  })
+  googleDriveUrl: string;
 
   @Column({
     type: 'varchar',

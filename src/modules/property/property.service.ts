@@ -20,7 +20,10 @@ export class PropertyService {
     });
     const propertyData = await this.repoService.propertyRepo.save({
       title: payload.title,
-      description: payload.description,
+      descriptionId: payload.descriptionId,
+      keyFeatureId: payload.keyFeatureId,
+      descriptionEn: payload.descriptionEn,
+      keyFeatureEn: payload.keyFeatureEn,
       price: payload.price,
       status: payload.status,
       availability: payload.availability,
@@ -37,6 +40,7 @@ export class PropertyService {
       buildingOrientation: payload.buildingOrientation,
       electricity: payload.electricity,
       furnished: payload.furnished,
+      googleDriveUrl: payload.googleDriveUrl,
       addressId: addressData.id,
     });
 
@@ -138,7 +142,10 @@ export class PropertyService {
       .getOne();
     await this.isPropertyExist(property);
 
-    await this.repoService.propertyTagRepo.delete({ propertyId: id });
+    Promise.all([
+      await this.repoService.propertyTagRepo.delete({ propertyId: id }),
+      await this.repoService.addressRepo.delete({ id: property.addressId }),
+    ]);
 
     const tagIds: Tag[] = [];
     if (payload.tags.length > 0) {
@@ -152,9 +159,21 @@ export class PropertyService {
         tagIds.push(tagData);
       }
     }
+
+    const addressData = await this.repoService.addressRepo.save({
+      subdistrict: payload.address.subdistrict,
+      regency: payload.address.regency,
+      province: payload.address.province,
+      detail: payload.address.detail ?? null,
+      locationMaps: payload.address.locationMaps ?? null,
+    });
+
     await this.repoService.propertyRepo.update(id, {
       title: payload.title,
-      description: payload.description,
+      descriptionId: payload.descriptionId,
+      keyFeatureId: payload.keyFeatureId,
+      descriptionEn: payload.descriptionEn,
+      keyFeatureEn: payload.keyFeatureEn,
       price: payload.price,
       status: payload.status,
       availability: payload.availability,
@@ -171,7 +190,8 @@ export class PropertyService {
       buildingOrientation: payload.buildingOrientation,
       electricity: payload.electricity,
       furnished: payload.furnished,
-      // addressId: payload.addressId,
+      googleDriveUrl: payload.googleDriveUrl,
+      addressId: addressData.id,
     });
     if (tagIds.length > 0) {
       const propertyTag = [];
