@@ -8,6 +8,7 @@ import {
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
+import { Role } from './enums/role.enum';
 
 @Injectable()
 export class AdminService {
@@ -63,6 +64,7 @@ export class AdminService {
   async findAll(
     options: IPaginationOptions,
     keyword: string,
+    role: Role,
   ): Promise<Pagination<Admin>> {
     const data = this.repoService.adminRepo.createQueryBuilder('admin');
 
@@ -72,7 +74,22 @@ export class AdminService {
       });
     }
 
-    return paginate<Admin>(data, options);
+    if (role) {
+      data.andWhere('admin.role = :role', { role: role });
+    }
+
+    const result = await paginate<Admin>(data, options);
+    if (result.meta.itemCount == 0) {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          errorCode: 'NOT_FOUND',
+          message: 'data not found on system',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return result;
   }
 
   async findOne(id: string) {
