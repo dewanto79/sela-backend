@@ -67,9 +67,23 @@ export class CreatePropertyDto {
 
   @ApiProperty({
     type: 'string',
-    nullable: false,
   })
-  description: string;
+  descriptionId: string;
+
+  @ApiProperty({
+    type: 'string',
+  })
+  keyFeatureId: string;
+
+  @ApiProperty({
+    type: 'string',
+  })
+  descriptionEn: string;
+
+  @ApiProperty({
+    type: 'string',
+  })
+  keyFeatureEn: string;
 
   @ApiProperty({
     type: 'number',
@@ -172,6 +186,9 @@ export class CreatePropertyDto {
     default: false,
   })
   furnished: boolean;
+
+  @ApiProperty({ type: 'string' })
+  googleDriveUrl: string;
 
   @ApiProperty({
     type: () => CreateAddressDto,
