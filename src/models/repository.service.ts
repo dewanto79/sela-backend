@@ -9,6 +9,9 @@ import { Image } from './entities/image.entity';
 import { Facility } from './entities/facility.entity';
 import { PropertyFacility } from './entities/property-facility.entity';
 import { Address } from './entities/address.entity';
+import { Agent } from './entities/agent.entity';
+import { Role } from './entities/role.entity';
+import { AgentRole } from './entities/agent-role.entity';
 
 @Injectable()
 export default class RepositoryService {
@@ -40,5 +43,14 @@ export default class RepositoryService {
 
     @InjectRepository(Address)
     public readonly addressRepo: Repository<Address>,
+
+    @InjectRepository(Agent)
+    public readonly agentRepo: Repository<Agent>,
+
+    @InjectRepository(Role)
+    public readonly roleRepo: Repository<Role>,
+
+    @InjectRepository(AgentRole)
+    public readonly agentRoleRepo: Repository<AgentRole>,
   ) {}
 }

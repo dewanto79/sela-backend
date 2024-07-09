@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
-import { AdminRole } from '../enums/role.enum';
+import { AdminRole } from 'src/modules/admin/enums/role.enum';
 
-export class CreateAdminDto {
+export class CreateAgentDto {
   @ApiProperty()
   @IsNotEmpty()
   name: string;
@@ -15,9 +15,9 @@ export class CreateAdminDto {
   @ApiProperty({
     enum: AdminRole,
     required: true,
-    default: AdminRole.ADMIN,
+    default: AdminRole.LISTING_AGENT,
   })
-  role: string;
+  role: AdminRole[];
 
   @ApiProperty()
   @IsNotEmpty()

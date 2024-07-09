@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  main:
+    container_name: main-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # target: development
+    ports:
+      - 3000:3000
+    entrypoint: ['npm', 'run', 'start:debug']
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+    volumes:
+      - .:/usr/src/app
+
+  postgres: 
+    image: postgres:14.2-alpine3.15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgresDBPass!
+      POSTGRES_DB: sela_property
+      PG_DATA: /var/lib/posgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/posgresql/data
+    networks:
+      - app-network
+    # command: -p 5433
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge
