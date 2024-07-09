@@ -9,6 +9,9 @@ import { PropertyFacility } from './entities/property-facility.entity';
 import { Facility } from './entities/facility.entity';
 import { Image } from './entities/image.entity';
 import { Address } from './entities/address.entity';
+import { Agent } from './entities/agent.entity';
+import { Role } from './entities/role.entity';
+import { AgentRole } from './entities/agent-role.entity';
 
 @Global()
 @Module({
@@ -22,6 +25,9 @@ import { Address } from './entities/address.entity';
       Facility,
       PropertyFacility,
       Address,
+      Agent,
+      Role,
+      AgentRole,
     ]),
   ],
   providers: [RepositoryService],

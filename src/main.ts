@@ -4,7 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
-import BigNumber from 'bignumber.js';
+
 dotenv.config();
 
 const APP_MODE = process.env.APP_MODE;
@@ -16,7 +16,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
   app.getHttpAdapter().getInstance().disable('x-powered-by');
-  BigNumber.config({ EXPONENTIAL_AT: [-60, 60], DECIMAL_PLACES: 60 });
+
   if (APP_MODE == 'DEV') {
     const config = new DocumentBuilder()
       .setTitle('Sela Property')

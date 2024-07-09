@@ -13,11 +13,9 @@ import {
   Query,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
-import { Role } from './enums/role.enum';
+import { AdminRole } from './enums/role.enum';
 
 @Controller('admin')
 @ApiTags('Admin Module')
@@ -43,7 +41,7 @@ export class AdminController {
   })
   @ApiQuery({
     name: 'role',
-    enum: Role,
+    enum: AdminRole,
     required: false,
   })
   @ApiQuery({
@@ -56,7 +54,7 @@ export class AdminController {
   })
   async findAll(
     @Query('keyword') keyword: string,
-    @Query('role') role: Role,
+    @Query('role') role: AdminRole,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
   ) {

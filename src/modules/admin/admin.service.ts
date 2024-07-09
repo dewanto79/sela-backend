@@ -8,7 +8,7 @@ import {
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
-import { Role } from './enums/role.enum';
+import { AdminRole } from './enums/role.enum';
 
 @Injectable()
 export class AdminService {
@@ -64,7 +64,7 @@ export class AdminService {
   async findAll(
     options: IPaginationOptions,
     keyword: string,
-    role: Role,
+    role: AdminRole,
   ): Promise<Pagination<Admin>> {
     const data = this.repoService.adminRepo.createQueryBuilder('admin');
 

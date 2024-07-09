@@ -1,16 +1,24 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AdminService } from '../admin/admin.service';
 import { CreateAdminDto } from '../admin/dto/create-admin.dto';
 import * as bcrypt from 'bcrypt';
 import { Admin } from 'src/models/entities/admin.entity';
 import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
+import { AgentService } from '../agent/agent.service';
+import { Agent } from 'src/models/entities/agent.entity';
 
 @Injectable()
 export class AuthAdminService {
   constructor(
     private readonly jwtService: JwtService,
-    private adminService: AdminService,
+    private readonly adminService: AdminService,
+    private readonly agentService: AgentService,
   ) {}
 
   public async register(registrationData: CreateAdminDto) {
@@ -36,18 +44,27 @@ export class AuthAdminService {
 
   public async getAuthenticatedUser(email: string, plainTextPassword: string) {
     try {
-      const admin = await this.adminService.getByEmail(email);
-      await this.verifyPassword(plainTextPassword, admin.password);
-      admin.password = undefined;
-      return admin;
+      let admin: Admin | Agent;
+      try {
+        admin = await this.adminService.getByEmail(email);
+        await this.verifyPassword(plainTextPassword, admin.password);
+        admin.password = undefined;
+        return admin;
+      } catch (error) {
+        admin = await this.agentService.getByEmail(email);
+        if (plainTextPassword != admin.password) {
+          throw new UnauthorizedException();
+        }
+        return admin;
+      }
     } catch (error) {
       throw new HttpException(
         {
-          status: HttpStatus.BAD_REQUEST,
+          status: HttpStatus.UNAUTHORIZED,
           errorCode: 'INVALID_CREDENTIALS',
           message: 'Invalid credentials',
         },
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }
