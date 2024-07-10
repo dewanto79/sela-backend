@@ -13,7 +13,7 @@ const PORT = parseInt(process.env.SERVER_PORT) || 3000;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
   app.getHttpAdapter().getInstance().disable('x-powered-by');
 

@@ -7,20 +7,20 @@ export class AgentRole {
   @PrimaryColumn({ name: 'agent_id' })
   agentId: string;
 
-  @PrimaryColumn({ name: 'roleId' })
+  @PrimaryColumn({ name: 'role_id' })
   roleId: string;
 
-  @ManyToOne(() => Agent, (agent) => agent.roles, {
+  @ManyToOne(() => Agent, (agent) => agent.role, {
     onDelete: 'NO ACTION',
     onUpdate: 'NO ACTION',
   })
   @JoinColumn([{ name: 'agent_id', referencedColumnName: 'id' }])
-  agents?: Agent[];
+  agents: Agent[];
 
   @ManyToOne(() => Role, (role) => role.agents, {
     onDelete: 'NO ACTION',
     onUpdate: 'NO ACTION',
   })
   @JoinColumn([{ name: 'role_id', referencedColumnName: 'id' }])
-  roles?: Role[];
+  role: Role[];
 }

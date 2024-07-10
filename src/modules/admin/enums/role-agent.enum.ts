@@ -1,0 +1,4 @@
+export enum RoleAgent {
+  SELLING_AGENT = 'SELLING_AGENT',
+  LISTING_AGENT = 'LISTING_AGENT',
+}

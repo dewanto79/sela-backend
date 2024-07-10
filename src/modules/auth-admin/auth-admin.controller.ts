@@ -19,12 +19,12 @@ import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
 export class AuthAdminController {
   constructor(private readonly authAdminService: AuthAdminService) {}
 
-  @Post('')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async register(@Body() payload: CreateAdminDto) {
-    return await this.authAdminService.register(payload);
-  }
+  // @Post('/')
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // async register(@Body() payload: CreateAdminDto) {
+  //   return await this.authAdminService.register(payload);
+  // }
 
   @Post('login')
   @UseGuards(AuthGuard('local'))
@@ -32,10 +32,10 @@ export class AuthAdminController {
     return await this.authAdminService.generateJwt(req.user);
   }
 
-  @Put('')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async update(@Body() payload: UpdateAdminDto, @Request() req) {
-    return await this.authAdminService.updateAdmin(req.user.id, payload);
-  }
+  // @Put('')
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // async update(@Body() payload: UpdateAdminDto, @Request() req) {
+  //   return await this.authAdminService.updateAdmin(req.user.id, payload);
+  // }
 }

@@ -30,7 +30,6 @@ services:
       - pgdata:/var/lib/posgresql/data
     networks:
       - app-network
-    # command: -p 5433
 
 volumes:
   pgdata:

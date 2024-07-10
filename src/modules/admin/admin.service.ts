@@ -17,20 +17,14 @@ export class AdminService {
   async getByEmail(email: string): Promise<Admin> {
     const admin = await this.repoService.adminRepo.findOne({
       where: { email: email },
-      select: ['id', 'email', 'name', 'password', 'role'],
+      select: ['id', 'email', 'name', 'password', 'role', 'status'],
     });
 
-    if (admin) {
-      return admin;
-    }
-    throw new HttpException(
-      {
-        status: HttpStatus.NOT_FOUND,
-        errorCode: 'ADMIN_NOT_FOUND',
-        message: 'Admin not found',
-      },
-      HttpStatus.NOT_FOUND,
-    );
+    await this.isAdminExist(admin);
+
+    admin['roles'] = [admin.role];
+    delete admin.role;
+    return admin;
   }
 
   async create(payload: CreateAdminDto): Promise<Admin> {
@@ -96,7 +90,22 @@ export class AdminService {
     const admin = await this.repoService.adminRepo.findOne({
       where: { id: id },
     });
+    await this.isAdminExist(admin);
 
+    admin['roles'] = [admin.role];
+    delete admin.role;
+    return admin;
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+
+    const deleted = await this.repoService.adminRepo.delete(id);
+
+    return deleted;
+  }
+
+  private async isAdminExist(admin: Admin) {
     if (!admin) {
       throw new HttpException(
         {
@@ -107,14 +116,5 @@ export class AdminService {
         HttpStatus.NOT_FOUND,
       );
     }
-    return admin;
-  }
-
-  async remove(id: string) {
-    await this.findOne(id);
-
-    const deleted = await this.repoService.adminRepo.delete(id);
-
-    return deleted;
   }
 }
