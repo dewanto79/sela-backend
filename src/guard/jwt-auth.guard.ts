@@ -1,10 +1,6 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { StatusAdmin } from 'src/modules/admin/enums/status-admin.enum';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {

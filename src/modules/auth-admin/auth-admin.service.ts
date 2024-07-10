@@ -10,8 +10,9 @@ import { CreateAdminDto } from '../admin/dto/create-admin.dto';
 import * as bcrypt from 'bcrypt';
 import { Admin } from 'src/models/entities/admin.entity';
 import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
-import { AgentService } from '../agent/agent.service';
+import { AgentService } from '../admin/agent.service';
 import { Agent } from 'src/models/entities/agent.entity';
+import { GenerateJWT } from './dto/generate-jwt.interface';
 
 @Injectable()
 export class AuthAdminService {
@@ -51,10 +52,11 @@ export class AuthAdminService {
         admin.password = undefined;
         return admin;
       } catch (error) {
-        admin = await this.agentService.getByEmail(email);
+        const admin = await this.agentService.getByEmail(email);
         if (plainTextPassword != admin.password) {
           throw new UnauthorizedException();
         }
+        admin.password = undefined;
         return admin;
       }
     } catch (error) {
@@ -89,10 +91,10 @@ export class AuthAdminService {
     }
   }
 
-  public async generateJwt(admin: Admin) {
+  public async generateJwt(admin: GenerateJWT) {
     const payload = {
       email: admin.email,
-      role: admin.role,
+      roles: admin.roles,
       id: admin.id,
       name: admin.name,
       status: admin.status,

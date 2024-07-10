@@ -9,8 +9,8 @@ import { Agent } from './agent.entity';
 
 @Entity({ name: 'roles' })
 export class Role extends BaseEntity {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({
     type: 'varchar',
@@ -25,7 +25,7 @@ export class Role extends BaseEntity {
   })
   status: string;
 
-  @ManyToMany(() => Agent, (agent) => agent.roles, {
+  @ManyToMany(() => Agent, (agent) => agent.role, {
     onDelete: 'NO ACTION',
     onUpdate: 'NO ACTION',
   })

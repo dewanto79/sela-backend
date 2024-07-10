@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -31,7 +32,6 @@ export class Agent extends BaseEntity {
   @Column({
     type: 'varchar',
     nullable: false,
-    select: false,
   })
   password: string;
 
@@ -70,5 +70,16 @@ export class Agent extends BaseEntity {
     onDelete: 'NO ACTION',
     onUpdate: 'NO ACTION',
   })
-  roles?: Role[];
+  @JoinTable({
+    name: 'agents_roles',
+    joinColumn: {
+      name: 'agent_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'role_id',
+      referencedColumnName: 'id',
+    },
+  })
+  role?: Role[];
 }

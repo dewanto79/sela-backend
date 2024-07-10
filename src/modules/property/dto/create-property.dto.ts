@@ -99,10 +99,9 @@ export class CreatePropertyDto {
   status: string;
 
   @ApiProperty({
-    type: 'string',
     nullable: false,
   })
-  availability: string;
+  availability: boolean;
 
   @ApiProperty({
     type: 'string',

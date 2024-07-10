@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AdminRole } from 'src/modules/admin/enums/role.enum';
+import { StatusAdmin } from 'src/modules/admin/enums/status-admin.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -22,7 +23,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    return requireRoles.some((role) => user.role == role);
+    return requireRoles.some((role) => user.roles.includes(role));
   }
 
   handleRequest(err: any, user: any, info: any) {

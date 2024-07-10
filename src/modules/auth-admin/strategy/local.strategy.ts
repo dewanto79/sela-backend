@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Admin } from 'src/models/entities/admin.entity';
 import { AuthAdminService } from '../auth-admin.service';
+import { StatusAdmin } from 'src/modules/admin/enums/status-admin.enum';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
@@ -18,7 +19,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       email,
       password,
     );
-    if (!user) {
+    if (!user || user.status != StatusAdmin.ACTIVE) {
       throw new UnauthorizedException();
     }
     return user as Admin;

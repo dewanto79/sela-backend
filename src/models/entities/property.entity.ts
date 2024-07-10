@@ -70,10 +70,11 @@ export class Property extends BaseEntity {
   status: string;
 
   @Column({
-    type: 'varchar',
+    type: 'bool',
     nullable: false,
+    default: true,
   })
-  availability: string;
+  availability: boolean;
 
   @Column({
     type: 'varchar',
@@ -81,6 +82,14 @@ export class Property extends BaseEntity {
     name: 'property_type',
   })
   propertyType: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: false,
+    name: 'selling_type',
+    default: 'SELL',
+  })
+  sellingType: string;
 
   @Column({
     type: 'decimal',
