@@ -8,10 +8,8 @@ import { JwtService } from '@nestjs/jwt';
 import { AdminService } from '../admin/admin.service';
 import { CreateAdminDto } from '../admin/dto/create-admin.dto';
 import * as bcrypt from 'bcrypt';
-import { Admin } from 'src/models/entities/admin.entity';
 import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
 import { AgentService } from '../admin/agent.service';
-import { Agent } from 'src/models/entities/agent.entity';
 import { GenerateJWT } from './dto/generate-jwt.interface';
 import { AdminResponse } from '../admin/dto/response/admin.response';
 

@@ -5,50 +5,43 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
-  OneToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { PropertyApproval } from './property-approval.entity';
+import { Property } from './property.entity';
+import { Agent } from './agent.entity';
+import { Admin } from './admin.entity';
 
-@Entity({ name: 'admins' })
-export class Admin extends BaseEntity {
+@Entity({ name: 'properties_approvals' })
+export class PropertyApproval extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({
-    type: 'varchar',
+    type: 'uuid',
     nullable: false,
+    name: 'property_id',
   })
-  name: string;
+  propertyId: string;
+
+  @Column({
+    type: 'uuid',
+    nullable: false,
+    name: 'agent_id',
+  })
+  agentId: string;
 
   @Column({
     type: 'varchar',
-    nullable: false,
-    unique: true,
-  })
-  email: string;
-
-  @Column({
-    type: 'varchar',
-    nullable: false,
-    select: false,
-  })
-  password: string;
-
-  @Column({
-    type: 'varchar',
-    nullable: false,
-    default: 'ADMIN',
-  })
-  roles: string;
-
-  @Column({
-    type: 'varchar',
-    nullable: false,
-    default: 'active',
   })
   status: string;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  note: string;
 
   @CreateDateColumn({
     select: false,
@@ -74,7 +67,11 @@ export class Admin extends BaseEntity {
   })
   deletedAt: Date;
 
-  @OneToMany(() => PropertyApproval, (approval) => approval.property)
-  @JoinColumn({ name: 'id' })
-  approvals?: PropertyApproval[];
+  @ManyToOne(() => Property, (property) => property.approvals)
+  @JoinColumn({ name: 'property_id' })
+  property: Property;
+
+  @ManyToOne(() => Admin, (admin) => admin.approvals)
+  @JoinColumn({ name: 'agent_id' })
+  agent: Admin;
 }

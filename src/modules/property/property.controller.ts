@@ -9,16 +9,20 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Delete,
 } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyStatusDto } from './dto/update-status.dto';
 import { AdminAuth, RolesAuth } from '../auth-admin/auth.decorator';
 import { AdminRole } from '../admin/enums/role.enum';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FindPropertyDto } from './dto/find-property.dto';
+import { UpdatePublishedDto } from './dto/update-published.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
 
 @Controller('property')
+@ApiTags('Property Module')
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
 
@@ -61,11 +65,32 @@ export class PropertyController {
   }
 
   @RolesAuth(AdminRole.ADMIN, AdminRole.LISTING_AGENT)
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() payload: UpdatePropertyDto) {
+    return await this.propertyService.update(id, payload);
+  }
+
+  @RolesAuth(AdminRole.ADMIN, AdminRole.LISTING_AGENT)
   @Put('status/:id')
   async updateStatus(
     @Param('id') id: string,
     @Body() payload: UpdatePropertyStatusDto,
   ) {
     return await this.propertyService.updateStatus(id, payload);
+  }
+
+  @RolesAuth(AdminRole.ADMIN)
+  @Put('published/:id')
+  async updatePublished(
+    @Param('id') id: string,
+    @Body() payload: UpdatePublishedDto,
+  ) {
+    return await this.propertyService.updatePublished(id, payload);
+  }
+
+  @RolesAuth(AdminRole.ADMIN)
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return await this.propertyService.delete(id);
   }
 }

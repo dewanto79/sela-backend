@@ -18,6 +18,7 @@ import { Image } from './image.entity';
 import { Facility } from './facility.entity';
 import { Address } from './address.entity';
 import { Agent } from './agent.entity';
+import { PropertyApproval } from './property-approval.entity';
 
 @Entity({ name: 'properties' })
 export class Property extends BaseEntity {
@@ -280,4 +281,8 @@ export class Property extends BaseEntity {
   @ManyToOne(() => Agent, (agent) => agent.properties)
   @JoinColumn({ name: 'agent_id' })
   agent: Agent;
+
+  @OneToMany(() => PropertyApproval, (approval) => approval.property)
+  @JoinColumn({ name: 'id' })
+  approvals?: PropertyApproval[];
 }
