@@ -30,6 +30,7 @@ export class AgentService {
   async mapAgentReponse(payload: Agent): Promise<AdminResponse> {
     const arrayRole = payload.roles.map((r) => r.name);
     return {
+      id: payload.id,
       email: payload.email,
       name: payload.name,
       roles: arrayRole,

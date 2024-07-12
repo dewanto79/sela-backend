@@ -1,6 +1,5 @@
-import { AdminRole } from '../../enums/role.enum';
-
 export interface AdminResponse {
+  id: string;
   email: string;
   name: string;
   roles: string[];
