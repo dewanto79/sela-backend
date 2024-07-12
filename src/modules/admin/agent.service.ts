@@ -69,7 +69,12 @@ export class AgentService {
         HttpStatus.NOT_FOUND,
       );
     }
-    return result;
+
+    const mapAgent = [];
+    for (const agent of result.items) {
+      mapAgent.push(await this.mapAgentReponse(agent));
+    }
+    return { items: mapAgent, meta: result.meta };
   }
 
   async findOne(id: string) {
