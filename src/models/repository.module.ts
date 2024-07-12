@@ -12,6 +12,7 @@ import { Address } from './entities/address.entity';
 import { Agent } from './entities/agent.entity';
 import { Role } from './entities/role.entity';
 import { AgentRole } from './entities/agent-role.entity';
+import { PropertyApproval } from './entities/property-approval.entity';
 
 @Global()
 @Module({
@@ -28,6 +29,7 @@ import { AgentRole } from './entities/agent-role.entity';
       Agent,
       Role,
       AgentRole,
+      PropertyApproval,
     ]),
   ],
   providers: [RepositoryService],

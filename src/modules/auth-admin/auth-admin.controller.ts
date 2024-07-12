@@ -1,18 +1,8 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Put,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthAdminService } from './auth-admin.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { CreateAdminDto } from '../admin/dto/create-admin.dto';
-import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('admin')
 @ApiTags('Admin Module')

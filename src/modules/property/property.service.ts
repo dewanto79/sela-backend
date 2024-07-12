@@ -10,12 +10,16 @@ import { FindPropertyDto } from './dto/find-property.dto';
 import { AdminRole } from '../admin/enums/role.enum';
 import { Brackets } from 'typeorm';
 import { Facility } from 'src/models/entities/facility.entity';
+import { UpdatePublishedDto } from './dto/update-published.dto';
+import { PropertyStatus } from './enums/property-status.enum';
+import { ApprovalStatus } from '../property-approval/enums/approval-status.enum';
 
 @Injectable()
 export class PropertyService {
   public constructor(private readonly repoService: RepositoryService) {}
 
   async create(payload: CreatePropertyDto) {
+    await this.isCreatePropertyStatusValid(payload.status);
     const addressData = await this.repoService.addressRepo.save({
       subdistrict: payload.address.subdistrict,
       regency: payload.address.regency,
@@ -50,12 +54,23 @@ export class PropertyService {
       googleDriveUrl: payload.googleDriveUrl,
       addressId: addressData.id,
     });
-
     const [savedTag, savedFacility, savedImage] = await Promise.all([
       this.handleSavingTag(propertyData.id, payload.tags),
       this.handleSavingFacility(propertyData.id, payload.facilities),
       this.handleSavingImage(propertyData.id, payload.images),
     ]);
+
+    if (payload.status == PropertyStatus.IN_REVIEW) {
+      const admins = await this.repoService.adminRepo.find();
+      for (const admin of admins) {
+        await this.repoService.propertyApprovalRepo.save({
+          propertyId: propertyData.id,
+          agentId: admin.id,
+          note: '',
+          status: ApprovalStatus.IN_REVIEW,
+        });
+      }
+    }
 
     return {
       ...propertyData,
@@ -171,7 +186,7 @@ export class PropertyService {
         {
           status: HttpStatus.NOT_FOUND,
           error_code: 'NOT_FOUND',
-          message: 'Token not found',
+          message: 'data not found',
         },
         HttpStatus.NOT_FOUND,
       );
@@ -201,6 +216,7 @@ export class PropertyService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .leftJoinAndSelect('property.approvals', 'approvals')
       .leftJoinAndSelect('property.agent', 'agent')
       .where('property.id = :id', { id: id })
       .getOne();
@@ -212,10 +228,13 @@ export class PropertyService {
       .createQueryBuilder('property')
       .where('property.id = :id', { id: id })
       .getOne();
-    await this.isPropertyExist(property);
-
+    await Promise.all([
+      this.isPropertyExist(property), // check property exist
+      this.isUpdatePropertyAllowed(property.status), // check is status allowed to update
+      this.isCreatePropertyStatusValid(payload.status), // check inputed status
+    ]);
     // delete address, tag, facility, image
-    Promise.all([
+    await Promise.all([
       await this.repoService.propertyTagRepo.delete({ propertyId: id }),
       await this.repoService.addressRepo.delete({ id: property.addressId }),
       await this.repoService.propertyFacilityRepo.delete({ propertyId: id }),
@@ -285,6 +304,26 @@ export class PropertyService {
     return property;
   }
 
+  async updatePublished(id: string, payload: UpdatePublishedDto) {
+    const property = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .where('property.id = :id', { id: id })
+      .getOne();
+    await Promise.all([
+      this.isPropertyExist(property),
+      this.isPropertyApproved(property),
+    ]);
+    await this.repoService.propertyRepo.update(id, {
+      published: payload.published,
+    });
+    return property;
+  }
+
+  async delete(id: string) {
+    const data = await this.repoService.propertyRepo.softDelete(id);
+    return data;
+  }
+
   private async isPropertyExist(property: Property): Promise<Property> {
     if (!property) {
       throw new HttpException(
@@ -294,6 +333,20 @@ export class PropertyService {
           message: 'property not found',
         },
         HttpStatus.NOT_FOUND,
+      );
+    }
+    return property;
+  }
+
+  private async isPropertyApproved(property: Property): Promise<Property> {
+    if (property.status != PropertyStatus.APPROVED) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          errorCode: 'BAD_REQUEST',
+          message: 'property not approved',
+        },
+        HttpStatus.BAD_REQUEST,
       );
     }
     return property;
@@ -372,6 +425,42 @@ export class PropertyService {
         savedImage.push(imageData);
       }
       await this.repoService.imageRepo.save(savedImage);
+    }
+  }
+
+  private async isCreatePropertyStatusValid(status: PropertyStatus) {
+    const notAllowedStatus = [
+      PropertyStatus.APPROVED,
+      PropertyStatus.ASK_REVISION,
+      PropertyStatus.REJECTED,
+    ];
+    if (notAllowedStatus.includes(status)) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error_code: 'BAD_REQUEST',
+          message: 'status is not allowed',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  private async isUpdatePropertyAllowed(status: string) {
+    const notAllowedStatus = [
+      PropertyStatus.IN_REVIEW.toString(),
+      PropertyStatus.APPROVED.toString(),
+      PropertyStatus.REJECTED.toString(),
+    ];
+    if (notAllowedStatus.includes(status)) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error_code: 'BAD_REQUEST',
+          message: 'status is not allowed',
+        },
+        HttpStatus.NOT_FOUND,
+      );
     }
   }
 }
