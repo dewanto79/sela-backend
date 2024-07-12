@@ -4,12 +4,15 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
+import { Property } from './property.entity';
 
 @Entity({ name: 'agents' })
 export class Agent extends BaseEntity {
@@ -82,4 +85,9 @@ export class Agent extends BaseEntity {
     },
   })
   role?: Role[];
+
+  @OneToMany(() => Property, (property) => property.agent)
+  @JoinColumn({ name: 'id' })
+  properties?: Property[];
 }
+
