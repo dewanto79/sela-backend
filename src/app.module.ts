@@ -6,6 +6,7 @@ import { AuthAdminModule } from './modules/auth-admin/auth-admin.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import ormconfig from './database/ormconfig';
 import { PropertyModule } from './modules/property/property.module';
+import { ApprovalPropertyModule } from './modules/approval-property/approval-property.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PropertyModule } from './modules/property/property.module';
     AdminModule,
     AuthAdminModule,
     PropertyModule,
+    ApprovalPropertyModule,
   ],
   controllers: [],
   providers: [AppService],

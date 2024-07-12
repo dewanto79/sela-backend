@@ -1,5 +1,7 @@
 export enum PropertyStatus {
   DRAFT = 'draft',
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
+  IN_REVIEW = 'in_review',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  ASK_REVISION = 'ask_revision',
 }
