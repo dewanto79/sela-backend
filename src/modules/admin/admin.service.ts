@@ -28,6 +28,7 @@ export class AdminService {
 
   async mapAdminReponse(payload: Admin): Promise<AdminResponse> {
     return {
+      id: payload.id,
       email: payload.email,
       name: payload.name,
       roles: [payload.roles],
