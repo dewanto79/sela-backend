@@ -7,6 +7,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -16,6 +17,7 @@ import { Tag } from './tag.entity';
 import { Image } from './image.entity';
 import { Facility } from './facility.entity';
 import { Address } from './address.entity';
+import { Agent } from './agent.entity';
 
 @Entity({ name: 'properties' })
 export class Property extends BaseEntity {
@@ -195,6 +197,13 @@ export class Property extends BaseEntity {
   })
   addressId: string;
 
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    name: 'agent_id',
+  })
+  agentId: string;
+
   @CreateDateColumn({
     select: false,
     type: 'timestamp with time zone',
@@ -260,4 +269,8 @@ export class Property extends BaseEntity {
     },
   })
   facilities?: Facility[];
+
+  @ManyToOne(() => Agent, (agent) => agent.properties)
+  @JoinColumn({ name: 'agent_id' })
+  agent: Agent;
 }

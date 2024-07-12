@@ -1,12 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNotEmptyObject,
   IsUrl,
   ValidateNested,
 } from 'class-validator';
+import { SellingType } from '../enums/selling-type.enum';
+import { PropertyStatus } from '../enums/property-status.enum';
 
 class Tag {
   @ApiProperty({ nullable: false })
@@ -63,6 +66,7 @@ class CreateAddressDto {
 
 export class CreatePropertyDto {
   @ApiProperty()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
@@ -89,46 +93,57 @@ export class CreatePropertyDto {
     type: 'number',
     nullable: false,
   })
+  @IsNotEmpty()
   price: number;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: false,
-    default: 'active',
-  })
-  status: string;
+  @ApiProperty({ default: PropertyStatus.DRAFT })
+  @IsNotEmpty()
+  @IsEnum(PropertyStatus, {})
+  status: PropertyStatus;
 
   @ApiProperty({
     nullable: false,
+    default: true,
   })
+  @IsNotEmpty()
   availability: boolean;
 
+  @ApiProperty({ default: SellingType.SELL })
+  @IsNotEmpty()
+  @IsEnum(SellingType, {})
+  sellingType: SellingType;
+
   @ApiProperty({
     type: 'string',
     nullable: false,
   })
+  @IsNotEmpty()
   propertyType: string;
 
   @ApiProperty({
     nullable: false,
   })
+  @IsNotEmpty()
   landSize: number;
 
   @ApiProperty({
     type: 'string',
     nullable: false,
   })
+  @IsNotEmpty()
   landSizeMeasurement: string;
 
   @ApiProperty({
     nullable: false,
   })
+  @IsNotEmpty()
   buildingSize: number;
 
   @ApiProperty({
     type: 'string',
     nullable: false,
   })
+  @IsNotEmpty()
   buildingSizeMeasurement: string;
 
   @ApiProperty({
@@ -162,7 +177,7 @@ export class CreatePropertyDto {
   @ApiProperty({
     type: 'smallint',
     nullable: false,
-    default: 0,
+    default: 1,
   })
   floorAmount: number;
 
@@ -224,4 +239,7 @@ export class CreatePropertyDto {
   @ValidateNested({ each: true })
   @Type(() => Image)
   images: [Image];
+
+  @ApiHideProperty()
+  userId: string;
 }

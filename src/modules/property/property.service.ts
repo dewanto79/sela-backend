@@ -27,6 +27,7 @@ export class PropertyService {
       price: payload.price,
       status: payload.status,
       availability: payload.availability,
+      sellingType: payload.sellingType,
       propertyType: payload.propertyType,
       landSize: payload.landSize,
       landSizeMeasurement: payload.landSizeMeasurement,
@@ -145,6 +146,8 @@ export class PropertyService {
     Promise.all([
       await this.repoService.propertyTagRepo.delete({ propertyId: id }),
       await this.repoService.addressRepo.delete({ id: property.addressId }),
+      await this.repoService.propertyFacilityRepo.delete({ propertyId: id }),
+      await this.repoService.imageRepo.delete({ documentId: id }),
     ]);
 
     const tagIds: Tag[] = [];
@@ -193,6 +196,7 @@ export class PropertyService {
       googleDriveUrl: payload.googleDriveUrl,
       addressId: addressData.id,
     });
+
     if (tagIds.length > 0) {
       const propertyTag = [];
       for (const tag of tagIds) {
