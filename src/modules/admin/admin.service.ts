@@ -9,29 +9,38 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { AdminRole } from './enums/role.enum';
+import { AdminResponse } from './dto/response/admin.response';
 
 @Injectable()
 export class AdminService {
   public constructor(private readonly repoService: RepositoryService) {}
 
-  async getByEmail(email: string): Promise<Admin> {
+  async getByEmail(email: string): Promise<AdminResponse> {
     const admin = await this.repoService.adminRepo.findOne({
       where: { email: email },
-      select: ['id', 'email', 'name', 'password', 'role', 'status'],
+      select: ['id', 'email', 'name', 'password', 'roles', 'status'],
     });
 
     await this.isAdminExist(admin);
 
-    admin['roles'] = [admin.role];
-    delete admin.role;
-    return admin;
+    return await this.mapAdminReponse(admin);
+  }
+
+  async mapAdminReponse(payload: Admin): Promise<AdminResponse> {
+    return {
+      email: payload.email,
+      name: payload.name,
+      roles: [payload.roles],
+      status: 'active',
+      password: payload.password,
+    };
   }
 
   async create(payload: CreateAdminDto): Promise<Admin> {
     return await this.repoService.adminRepo.save({
       email: payload.email,
       name: payload.name,
-      role: payload.role,
+      roles: payload.roles,
       status: 'active',
       password: payload.password,
     });
@@ -45,7 +54,7 @@ export class AdminService {
       {
         name: payload.name,
         email: payload.email,
-        role: payload.role,
+        roles: payload.roles,
         password: payload.password,
         status: payload.status,
       },
@@ -58,7 +67,7 @@ export class AdminService {
   async findAll(
     options: IPaginationOptions,
     keyword: string,
-    role: AdminRole,
+    roles: AdminRole,
   ): Promise<Pagination<Admin>> {
     const data = this.repoService.adminRepo.createQueryBuilder('admin');
 
@@ -68,8 +77,8 @@ export class AdminService {
       });
     }
 
-    if (role) {
-      data.andWhere('admin.role = :role', { role: role });
+    if (roles) {
+      data.andWhere('admin.roles = :roles', { roles: roles });
     }
 
     const result = await paginate<Admin>(data, options);
@@ -92,9 +101,7 @@ export class AdminService {
     });
     await this.isAdminExist(admin);
 
-    admin['roles'] = [admin.role];
-    delete admin.role;
-    return admin;
+    return await this.mapAdminReponse(admin);
   }
 
   async remove(id: string) {

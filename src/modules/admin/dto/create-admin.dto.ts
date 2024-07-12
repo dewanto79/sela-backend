@@ -17,7 +17,7 @@ export class CreateAdminDto {
     required: true,
     default: AdminRole.ADMIN,
   })
-  role: string;
+  roles: string;
 
   @ApiProperty()
   @IsNotEmpty()

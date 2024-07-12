@@ -13,6 +13,7 @@ import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
 import { AgentService } from '../admin/agent.service';
 import { Agent } from 'src/models/entities/agent.entity';
 import { GenerateJWT } from './dto/generate-jwt.interface';
+import { AdminResponse } from '../admin/dto/response/admin.response';
 
 @Injectable()
 export class AuthAdminService {
@@ -45,7 +46,7 @@ export class AuthAdminService {
 
   public async getAuthenticatedUser(email: string, plainTextPassword: string) {
     try {
-      let admin: Admin | Agent;
+      let admin: AdminResponse;
       try {
         admin = await this.adminService.getByEmail(email);
         await this.verifyPassword(plainTextPassword, admin.password);

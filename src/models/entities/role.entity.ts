@@ -25,7 +25,7 @@ export class Role extends BaseEntity {
   })
   status: string;
 
-  @ManyToMany(() => Agent, (agent) => agent.role, {
+  @ManyToMany(() => Agent, (agent) => agent.roles, {
     onDelete: 'NO ACTION',
     onUpdate: 'NO ACTION',
   })
