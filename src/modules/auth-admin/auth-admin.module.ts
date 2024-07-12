@@ -13,7 +13,7 @@ import { LocalStrategy } from 'src/modules/auth-admin/strategy/local.strategy';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '24h' },
+      signOptions: { expiresIn: '30d' },
     }),
   ],
   controllers: [AuthAdminController],

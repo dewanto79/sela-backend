@@ -6,12 +6,17 @@ import {
   Param,
   Put,
   Request,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyStatusDto } from './dto/update-status.dto';
 import { AdminAuth, RolesAuth } from '../auth-admin/auth.decorator';
 import { AdminRole } from '../admin/enums/role.enum';
+import { ApiQuery } from '@nestjs/swagger';
+import { FindPropertyDto } from './dto/find-property.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -27,8 +32,26 @@ export class PropertyController {
 
   @AdminAuth()
   @Get()
-  async findAll() {
-    return await this.propertyService.findAll();
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+  })
+  async findAll(
+    @Query() payload: FindPropertyDto,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+    @Request() req,
+  ) {
+    const userJwt = req.user;
+    console.log(payload);
+    return await this.propertyService.findAll(
+      { page: page, limit: limit },
+      { ...payload, user: userJwt },
+    );
   }
 
   @AdminAuth()

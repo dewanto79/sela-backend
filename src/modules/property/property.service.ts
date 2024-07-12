@@ -5,6 +5,11 @@ import RepositoryService from 'src/models/repository.service';
 import { Tag } from 'src/models/entities/tag.entity';
 import { Property } from 'src/models/entities/property.entity';
 import { UpdatePropertyStatusDto } from './dto/update-status.dto';
+import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import { FindPropertyDto } from './dto/find-property.dto';
+import { AdminRole } from '../admin/enums/role.enum';
+import { Brackets } from 'typeorm';
+import { Facility } from 'src/models/entities/facility.entity';
 
 @Injectable()
 export class PropertyService {
@@ -19,6 +24,7 @@ export class PropertyService {
       locationMaps: payload.address.locationMaps ?? null,
     });
     const propertyData = await this.repoService.propertyRepo.save({
+      agentId: payload.userId,
       title: payload.title,
       descriptionId: payload.descriptionId,
       keyFeatureId: payload.keyFeatureId,
@@ -45,64 +51,11 @@ export class PropertyService {
       addressId: addressData.id,
     });
 
-    const savedTag = [];
-    if (payload.tags.length > 0) {
-      const propertyTag = [];
-      for (const tag of payload.tags) {
-        let tagData = await this.repoService.tagRepo.findOne({
-          where: { name: tag.name },
-        });
-        if (!tagData) {
-          tagData = await this.repoService.tagRepo.save({ name: tag.name });
-        }
-        savedTag.push(tagData);
-
-        propertyTag.push(
-          this.repoService.propertyTagRepo.create({
-            propertyId: propertyData.id,
-            tagId: tagData.id,
-          }),
-        );
-      }
-      await this.repoService.propertyTagRepo.save(propertyTag);
-    }
-
-    const savedFacility = [];
-    if (payload.facilities.length > 0) {
-      const propertyFacility = [];
-      for (const facility of payload.facilities) {
-        let facilityData = await this.repoService.facilityRepo.findOne({
-          where: { name: facility.name },
-        });
-        if (!facilityData) {
-          facilityData = await this.repoService.facilityRepo.save({
-            name: facility.name,
-          });
-        }
-        savedFacility.push(facilityData);
-
-        propertyFacility.push(
-          this.repoService.propertyFacilityRepo.create({
-            propertyId: propertyData.id,
-            facilityId: facilityData.id,
-          }),
-        );
-      }
-      await this.repoService.propertyFacilityRepo.save(propertyFacility);
-    }
-
-    const savedImage = [];
-    if (payload.images.length > 0) {
-      for (const image of payload.images) {
-        const imageData = this.repoService.imageRepo.create({
-          url: image.url,
-          type: image.type,
-          documentId: propertyData.id,
-        });
-        savedImage.push(imageData);
-      }
-      await this.repoService.imageRepo.save(savedImage);
-    }
+    const [savedTag, savedFacility, savedImage] = await Promise.all([
+      this.handleSavingTag(propertyData.id, payload.tags),
+      this.handleSavingFacility(propertyData.id, payload.facilities),
+      this.handleSavingImage(propertyData.id, payload.images),
+    ]);
 
     return {
       ...propertyData,
@@ -113,15 +66,132 @@ export class PropertyService {
     };
   }
 
-  async findAll() {
-    const property = await this.repoService.propertyRepo
+  async findAll(options: IPaginationOptions, payload: FindPropertyDto) {
+    let data = this.repoService.propertyRepo
       .createQueryBuilder('property')
       .leftJoinAndSelect('property.address', 'address')
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .leftJoin('property.agent', 'agent')
+      .addSelect(['agent.name']);
+    if (payload.keyword && payload.keyword != '') {
+      data = data.andWhere('property.title ILIKE :title', {
+        title: '%' + payload.keyword + '%',
+      });
+    }
+    if (payload.lowerPrice && payload.lowerPrice > 0) {
+      data = data.andWhere('property.price >= :lowerPrice', {
+        lowerPrice: payload.lowerPrice,
+      });
+    }
+    if (payload.higherPrice && payload.higherPrice > 0) {
+      data = data.andWhere('property.price <= :higherPrice', {
+        higherPrice: payload.higherPrice,
+      });
+    }
+    if (payload.status && payload.status != '') {
+      data = data.andWhere('property.status = :status', {
+        status: payload.status,
+      });
+    }
+    if (payload.availability != null) {
+      data = data.andWhere('property.availability = :availability', {
+        availability: payload.availability,
+      });
+    }
+    if (payload.propertyType && payload.propertyType != '') {
+      data = data.andWhere('property.propertyType = :propertyType', {
+        propertyType: payload.propertyType,
+      });
+    }
+    if (payload.sellingType) {
+      data = data.andWhere('property.sellingType = :sellingType', {
+        sellingType: payload.sellingType,
+      });
+    }
+    if (payload.tags && payload.tags != '') {
+      const queryTags = payload.tags.split(',');
+      data = data.andWhere('tags.name IN (:...tags)', {
+        tags: queryTags,
+      });
+    }
+    if (payload.facilities && payload.facilities != '') {
+      const facilityTags = payload.facilities.split(',');
+      data = data.andWhere('facilities.name IN (:...facilities)', {
+        tags: facilityTags,
+      });
+    }
+    if (payload.address && payload.address != '') {
+      data = data.andWhere('address.subdistrict = :address', {
+        address: payload.address,
+      });
+    }
+    if (payload.user) {
+      const userRoles: string[] = payload.user.roles;
+      switch (userRoles.toString()) {
+        case [AdminRole.LISTING_AGENT, AdminRole.SELLING_AGENT].toString():
+        case [AdminRole.SELLING_AGENT, AdminRole.LISTING_AGENT].toString():
+          data = data.andWhere(
+            new Brackets((qb) => {
+              qb.where('property.status = :status', {
+                status: 'approved',
+              }).orWhere('property.agentId = :agentId', {
+                agentId: payload.user.id,
+              });
+            }),
+          );
+          break;
+        case AdminRole.SELLING_AGENT:
+          data = data.andWhere('property.status = :status', {
+            status: 'approved',
+          });
+          break;
+        case AdminRole.LISTING_AGENT:
+          data = data.andWhere('property.agentId = :agentId', {
+            agentId: payload.user.id,
+          });
+          break;
+        default:
+          data = data.andWhere('property.status != :status', {
+            status: 'draft',
+          });
+          break;
+      }
+    }
+
+    const totalItems = await data.getCount();
+    const limit = options.limit;
+    const page = options.page;
+    if (
+      Number(page) > Math.ceil(totalItems / Number(limit)) ||
+      Number(limit) * Number(page) == 0
+    ) {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          error_code: 'NOT_FOUND',
+          message: 'Token not found',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const pairsData = await data
+      .take(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
       .getMany();
-    return property;
+    const paginational = {
+      items: pairsData,
+      meta: {
+        totalItems: totalItems,
+        itemCount: pairsData.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / Number(limit)),
+        currentPage: Number(page),
+      },
+    };
+
+    return paginational;
   }
 
   async findOne(id: string) {
@@ -131,6 +201,7 @@ export class PropertyService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .leftJoinAndSelect('property.agent', 'agent')
       .where('property.id = :id', { id: id })
       .getOne();
     return await this.isPropertyExist(property);
@@ -143,6 +214,7 @@ export class PropertyService {
       .getOne();
     await this.isPropertyExist(property);
 
+    // delete address, tag, facility, image
     Promise.all([
       await this.repoService.propertyTagRepo.delete({ propertyId: id }),
       await this.repoService.addressRepo.delete({ id: property.addressId }),
@@ -150,19 +222,7 @@ export class PropertyService {
       await this.repoService.imageRepo.delete({ documentId: id }),
     ]);
 
-    const tagIds: Tag[] = [];
-    if (payload.tags.length > 0) {
-      for (const tag of payload.tags) {
-        let tagData = await this.repoService.tagRepo.findOne({
-          where: { name: tag.name },
-        });
-        if (!tagData) {
-          tagData = await this.repoService.tagRepo.save(tag);
-        }
-        tagIds.push(tagData);
-      }
-    }
-
+    // save address
     const addressData = await this.repoService.addressRepo.save({
       subdistrict: payload.address.subdistrict,
       regency: payload.address.regency,
@@ -171,6 +231,7 @@ export class PropertyService {
       locationMaps: payload.address.locationMaps ?? null,
     });
 
+    // update property
     await this.repoService.propertyRepo.update(id, {
       title: payload.title,
       descriptionId: payload.descriptionId,
@@ -196,20 +257,18 @@ export class PropertyService {
       googleDriveUrl: payload.googleDriveUrl,
       addressId: addressData.id,
     });
-
-    if (tagIds.length > 0) {
-      const propertyTag = [];
-      for (const tag of tagIds) {
-        propertyTag.push(
-          this.repoService.propertyTagRepo.create({
-            propertyId: id,
-            tagId: tag.id,
-          }),
-        );
-      }
-      await this.repoService.propertyTagRepo.save(propertyTag);
-    }
-    return { ...property, tags: tagIds };
+    const [savedTag, savedFacility, savedImage] = await Promise.all([
+      this.handleSavingTag(id, payload.tags),
+      this.handleSavingFacility(id, payload.facilities),
+      this.handleSavingImage(id, payload.images),
+    ]);
+    return {
+      ...payload,
+      address: addressData,
+      tags: savedTag,
+      facilities: savedFacility,
+      images: savedImage,
+    };
   }
 
   async updateStatus(id: string, payload: UpdatePropertyStatusDto) {
@@ -226,7 +285,7 @@ export class PropertyService {
     return property;
   }
 
-  async isPropertyExist(property: Property): Promise<Property> {
+  private async isPropertyExist(property: Property): Promise<Property> {
     if (!property) {
       throw new HttpException(
         {
@@ -238,5 +297,81 @@ export class PropertyService {
       );
     }
     return property;
+  }
+
+  private async handleSavingTag(propertyId: string, tags: { name: string }[]) {
+    // handle save tag
+    const tagDatas: Tag[] = [];
+    if (tags.length > 0) {
+      const propertyTag = [];
+      for (const tag of tags) {
+        let tagData = await this.repoService.tagRepo.findOne({
+          where: { name: tag.name },
+        });
+        if (!tagData) {
+          tagData = await this.repoService.tagRepo.save(tag);
+        }
+        tagDatas.push(tagData);
+      }
+
+      for (const tag of tagDatas) {
+        propertyTag.push(
+          this.repoService.propertyTagRepo.create({
+            propertyId: propertyId,
+            tagId: tag.id,
+          }),
+        );
+      }
+      await this.repoService.propertyTagRepo.save(propertyTag);
+    }
+    return tagDatas;
+  }
+
+  private async handleSavingFacility(
+    propertyId: string,
+    facilities: { name: string }[],
+  ) {
+    const savedFacilities: Facility[] = [];
+    if (facilities.length > 0) {
+      const propertyFacility = [];
+      for (const facility of facilities) {
+        let facilityData = await this.repoService.facilityRepo.findOne({
+          where: { name: facility.name },
+        });
+        if (!facilityData) {
+          facilityData = await this.repoService.facilityRepo.save({
+            name: facility.name,
+          });
+        }
+        savedFacilities.push(facilityData);
+
+        propertyFacility.push(
+          this.repoService.propertyFacilityRepo.create({
+            propertyId: propertyId,
+            facilityId: facilityData.id,
+          }),
+        );
+      }
+      await this.repoService.propertyFacilityRepo.save(propertyFacility);
+    }
+    return savedFacilities;
+  }
+
+  private async handleSavingImage(
+    propertyId: string,
+    images: { url: string; type: string }[],
+  ) {
+    const savedImage = [];
+    if (images.length > 0) {
+      for (const image of images) {
+        const imageData = this.repoService.imageRepo.create({
+          url: image.url,
+          type: image.type,
+          documentId: propertyId,
+        });
+        savedImage.push(imageData);
+      }
+      await this.repoService.imageRepo.save(savedImage);
+    }
   }
 }

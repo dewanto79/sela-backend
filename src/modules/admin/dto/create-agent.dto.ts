@@ -41,5 +41,5 @@ export class CreateAgentDto {
     default: StatusAdmin.ACTIVE,
   })
   @IsEnum(StatusAdmin)
-  status: StatusAdmin.ACTIVE;
+  status: StatusAdmin;
 }

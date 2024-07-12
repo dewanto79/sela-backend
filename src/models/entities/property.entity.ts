@@ -79,6 +79,13 @@ export class Property extends BaseEntity {
   availability: boolean;
 
   @Column({
+    type: 'bool',
+    nullable: false,
+    default: false,
+  })
+  published: boolean;
+
+  @Column({
     type: 'varchar',
     nullable: false,
     name: 'property_type',
