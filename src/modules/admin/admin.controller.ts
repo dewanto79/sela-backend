@@ -54,7 +54,7 @@ export class AdminController {
     required: false,
   })
   @ApiQuery({
-    name: 'role',
+    name: 'roles',
     required: false,
   })
   @ApiQuery({
@@ -67,14 +67,14 @@ export class AdminController {
   })
   async findAll(
     @Query('keyword') keyword: string,
-    @Query('role') role: string,
+    @Query('roles') roles: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
   ) {
     return this.agentService.findAll(
       { page: page, limit: limit },
       keyword,
-      role,
+      roles,
     );
   }
 

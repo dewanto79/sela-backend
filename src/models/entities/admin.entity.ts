@@ -38,7 +38,7 @@ export class Admin extends BaseEntity {
     nullable: false,
     default: 'ADMIN',
   })
-  role: string;
+  roles: string;
 
   @Column({
     type: 'varchar',

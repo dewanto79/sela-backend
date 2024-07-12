@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
 import { RoleAgent } from '../enums/role-agent.enum';
 import { StatusAdmin } from '../enums/status-admin.enum';
 
@@ -22,7 +28,7 @@ export class CreateAgentDto {
   })
   @IsEnum(RoleAgent, { each: true })
   @ArrayNotEmpty()
-  role: RoleAgent[];
+  roles: RoleAgent[];
 
   @ApiProperty()
   @IsNotEmpty()

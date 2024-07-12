@@ -84,7 +84,7 @@ export class Agent extends BaseEntity {
       referencedColumnName: 'id',
     },
   })
-  role?: Role[];
+  roles?: Role[];
 
   @OneToMany(() => Property, (property) => property.agent)
   @JoinColumn({ name: 'id' })
