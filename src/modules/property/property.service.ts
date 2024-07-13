@@ -110,7 +110,7 @@ export class PropertyService {
         status: payload.status,
       });
     }
-    if (payload.availability != null) {
+    if (payload.availability && payload.availability != '') {
       data = data.andWhere('property.availability = :availability', {
         availability: payload.availability,
       });
@@ -232,23 +232,26 @@ export class PropertyService {
       this.isPropertyExist(property), // check property exist
       this.isUpdatePropertyAllowed(property.status), // check is status allowed to update
       this.isCreatePropertyStatusValid(payload.status), // check inputed status
+      this.isCreatedByAgent(payload.userId, property.agentId), // check is created by the same agent
     ]);
     // delete address, tag, facility, image
     await Promise.all([
-      await this.repoService.propertyTagRepo.delete({ propertyId: id }),
-      await this.repoService.addressRepo.delete({ id: property.addressId }),
-      await this.repoService.propertyFacilityRepo.delete({ propertyId: id }),
-      await this.repoService.imageRepo.delete({ documentId: id }),
+      this.repoService.propertyTagRepo.delete({ propertyId: id }),
+      this.repoService.propertyFacilityRepo.delete({ propertyId: id }),
+      this.repoService.imageRepo.delete({ documentId: id }),
     ]);
 
     // save address
-    const addressData = await this.repoService.addressRepo.save({
-      subdistrict: payload.address.subdistrict,
-      regency: payload.address.regency,
-      province: payload.address.province,
-      detail: payload.address.detail ?? null,
-      locationMaps: payload.address.locationMaps ?? null,
-    });
+    const addressData = await this.repoService.addressRepo.update(
+      property.addressId,
+      {
+        subdistrict: payload.address.subdistrict,
+        regency: payload.address.regency,
+        province: payload.address.province,
+        detail: payload.address.detail ?? null,
+        locationMaps: payload.address.locationMaps ?? null,
+      },
+    );
 
     // update property
     await this.repoService.propertyRepo.update(id, {
@@ -274,7 +277,7 @@ export class PropertyService {
       electricity: payload.electricity,
       furnished: payload.furnished,
       googleDriveUrl: payload.googleDriveUrl,
-      addressId: addressData.id,
+      addressId: property.addressId,
     });
     const [savedTag, savedFacility, savedImage] = await Promise.all([
       this.handleSavingTag(id, payload.tags),
@@ -458,6 +461,19 @@ export class PropertyService {
           status: HttpStatus.BAD_REQUEST,
           error_code: 'BAD_REQUEST',
           message: 'status is not allowed',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  private async isCreatedByAgent(userId: string, agentId: string) {
+    if (userId != agentId) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error_code: 'BAD_REQUEST',
+          message: 'The agent is not the one who create the property',
         },
         HttpStatus.NOT_FOUND,
       );
