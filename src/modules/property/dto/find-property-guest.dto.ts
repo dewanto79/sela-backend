@@ -1,12 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNumberString, IsOptional } from 'class-validator';
-import { AdminResponse } from 'src/modules/admin/dto/response/admin.response';
 import { SellingType } from '../enums/selling-type.enum';
 import { ToBoolean } from 'src/decorator/to-boolean';
 
-export class FindPropertyDto {
-  user?: AdminResponse;
-
+export class FindPropertyGuestDto {
   @ApiProperty({ required: false })
   @IsOptional()
   keyword?: string;
@@ -20,10 +17,6 @@ export class FindPropertyDto {
   @IsNumberString()
   @IsOptional()
   higherPrice?: number;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  status?: string;
 
   @ApiProperty({ required: false })
   @ToBoolean()
