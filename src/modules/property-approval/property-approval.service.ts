@@ -72,7 +72,7 @@ export class PropertyApprovalService {
 
   private async isStatusAlreadyMoved(status: ApprovalStatus) {
     const notAllowedStatus = [ApprovalStatus.ALREADY_MOVED];
-    if (notAllowedStatus.includes(status)) {
+    if (!notAllowedStatus.includes(status)) {
       return;
     }
     throw new HttpException(

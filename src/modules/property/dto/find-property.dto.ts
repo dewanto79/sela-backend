@@ -7,6 +7,7 @@ import {
 } from 'class-validator';
 import { AdminResponse } from 'src/modules/admin/dto/response/admin.response';
 import { SellingType } from '../enums/selling-type.enum';
+import { ToBoolean } from 'src/decorator/to-boolean';
 
 export class FindPropertyDto {
   user?: AdminResponse;
@@ -30,9 +31,9 @@ export class FindPropertyDto {
   status?: string;
 
   @ApiProperty({ required: false })
-  @IsBooleanString()
+  @ToBoolean()
   @IsOptional()
-  availability?: boolean;
+  availability?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

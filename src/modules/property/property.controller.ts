@@ -51,7 +51,6 @@ export class PropertyController {
     @Request() req,
   ) {
     const userJwt = req.user;
-    console.log(payload);
     return await this.propertyService.findAll(
       { page: page, limit: limit },
       { ...payload, user: userJwt },
@@ -66,7 +65,13 @@ export class PropertyController {
 
   @RolesAuth(AdminRole.ADMIN, AdminRole.LISTING_AGENT)
   @Put(':id')
-  async update(@Param('id') id: string, @Body() payload: UpdatePropertyDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() payload: UpdatePropertyDto,
+    @Request() req,
+  ) {
+    const userJwt = req.user;
+    payload.userId = userJwt.id;
     return await this.propertyService.update(id, payload);
   }
 
