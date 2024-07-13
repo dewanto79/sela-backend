@@ -284,6 +284,17 @@ export class PropertyService {
       this.handleSavingFacility(id, payload.facilities),
       this.handleSavingImage(id, payload.images),
     ]);
+    if (payload.status == PropertyStatus.IN_REVIEW) {
+      const admins = await this.repoService.adminRepo.find();
+      for (const admin of admins) {
+        await this.repoService.propertyApprovalRepo.save({
+          propertyId: id,
+          agentId: admin.id,
+          note: '',
+          status: ApprovalStatus.IN_REVIEW,
+        });
+      }
+    }
     return {
       ...payload,
       address: addressData,
