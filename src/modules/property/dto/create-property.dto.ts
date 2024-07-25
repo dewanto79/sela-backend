@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNotEmptyObject,
+  IsOptional,
   IsUrl,
   ValidateNested,
 } from 'class-validator';
@@ -101,10 +102,7 @@ export class CreatePropertyDto {
   @IsEnum(PropertyStatus, {})
   status: PropertyStatus;
 
-  @ApiProperty({
-    nullable: false,
-    default: true,
-  })
+  @ApiProperty()
   @IsNotEmpty()
   availability: boolean;
 
@@ -113,23 +111,15 @@ export class CreatePropertyDto {
   @IsEnum(SellingType, {})
   sellingType: SellingType;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: false,
-  })
+  @ApiProperty()
   @IsNotEmpty()
   propertyType: string;
 
-  @ApiProperty({
-    nullable: false,
-  })
+  @ApiProperty()
   @IsNotEmpty()
   landSize: number;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: false,
-  })
+  @ApiProperty()
   @IsNotEmpty()
   landSizeMeasurement: string;
 
@@ -139,69 +129,57 @@ export class CreatePropertyDto {
   @IsNotEmpty()
   buildingSize: number;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: false,
-  })
+  @ApiProperty()
   @IsNotEmpty()
   buildingSizeMeasurement: string;
 
   @ApiProperty({
-    type: 'smallint',
-    nullable: false,
     default: 0,
   })
   bedRoomsAmount: number;
 
   @ApiProperty({
-    type: 'smallint',
-    nullable: false,
     default: 0,
   })
   bathRoomsAmount: number;
 
   @ApiProperty({
-    type: 'smallint',
-    nullable: false,
     default: 0,
   })
   garageAmount: number;
 
   @ApiProperty({
-    type: 'smallint',
-    nullable: false,
     default: 0,
   })
   carParkAmount: number;
 
   @ApiProperty({
-    type: 'smallint',
-    nullable: false,
     default: 1,
   })
   floorAmount: number;
 
-  @ApiProperty({
-    type: 'string',
-    nullable: true,
-  })
+  @ApiProperty()
   buildingOrientation: string;
 
   @ApiProperty({
-    type: 'integer',
-    nullable: true,
     default: 0,
   })
   electricity: number;
 
-  @ApiProperty({
-    type: 'bool',
-    nullable: false,
-    default: false,
-  })
+  @ApiProperty({ default: false })
+  @IsOptional()
   furnished: boolean;
 
-  @ApiProperty({ type: 'string' })
+  @ApiProperty()
+  @IsOptional()
+  owner: string;
+
+  @ApiProperty()
+  @IsOptional()
+  ownerPhone: string;
+
+  @ApiProperty()
+  @IsOptional()
   googleDriveUrl: string;
 
   @ApiProperty({

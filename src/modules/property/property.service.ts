@@ -51,6 +51,8 @@ export class PropertyService {
       buildingOrientation: payload.buildingOrientation,
       electricity: payload.electricity,
       furnished: payload.furnished,
+      owner: payload.owner,
+      ownerPhone: payload.ownerPhone,
       googleDriveUrl: payload.googleDriveUrl,
       addressId: addressData.id,
     });
@@ -91,9 +93,15 @@ export class PropertyService {
       .leftJoin('property.agent', 'agent')
       .addSelect(['agent.name']);
     if (payload.keyword && payload.keyword != '') {
-      data = data.andWhere('property.title ILIKE :title', {
-        title: '%' + payload.keyword + '%',
-      });
+      data = data.andWhere(
+        new Brackets((qb) => {
+          qb.where('property.title ILIKE :title', {
+            title: '%' + payload.keyword + '%',
+          }).orWhere('property.number ILIKE :number', {
+            agentId: '%' + payload.keyword + '%',
+          });
+        }),
+      );
     }
     if (payload.lowerPrice && payload.lowerPrice > 0) {
       data = data.andWhere('property.price >= :lowerPrice', {
@@ -276,6 +284,8 @@ export class PropertyService {
       buildingOrientation: payload.buildingOrientation,
       electricity: payload.electricity,
       furnished: payload.furnished,
+      owner: payload.owner,
+      ownerPhone: payload.ownerPhone,
       googleDriveUrl: payload.googleDriveUrl,
       addressId: property.addressId,
     });

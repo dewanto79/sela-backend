@@ -194,6 +194,27 @@ export class Property extends BaseEntity {
   @Column({
     type: 'varchar',
     nullable: true,
+    name: 'owner',
+  })
+  owner: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    name: 'owner_phone',
+  })
+  ownerPhone: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    name: 'property_number',
+  })
+  propertyNumber: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
     name: 'google_drive_url',
   })
   googleDriveUrl: string;

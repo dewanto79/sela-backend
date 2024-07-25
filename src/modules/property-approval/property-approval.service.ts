@@ -29,6 +29,13 @@ export class PropertyApprovalService {
       ),
     ]);
 
+    if (payload.status == ApprovalStatus.APPROVED.toString()) {
+      const propertNumber = await this.generatePropertyNumber();
+      this.repoService.propertyRepo.update(propertyId, {
+        propertyNumber: propertNumber,
+      });
+    }
+
     return await this.repoService.propertyApprovalRepo.update(approval.id, {
       note: payload.note,
       status: payload.status,
@@ -83,5 +90,17 @@ export class PropertyApprovalService {
       },
       HttpStatus.NOT_FOUND,
     );
+  }
+
+  private async generatePropertyNumber(): Promise<string> {
+    const lastApproved = await this.repoService.propertyRepo
+      .createQueryBuilder()
+      .where('propertyNumber IS NOT NULL')
+      .orderBy('propertyNumber', 'DESC')
+      .getOne();
+
+    return lastApproved.propertyNumber
+      ? (lastApproved.propertyNumber + 1).toString()
+      : '1';
   }
 }
