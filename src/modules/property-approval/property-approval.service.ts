@@ -3,15 +3,22 @@ import { UpdatePropertyApprovalDto } from './dto/update-property-approval.dto';
 import RepositoryService from 'src/models/repository.service';
 import { PropertyApproval } from 'src/models/entities/property-approval.entity';
 import { ApprovalStatus } from './enums/approval-status.enum';
+import { Property } from 'src/models/entities/property.entity';
+import { PropertyType } from '../property/enums/property-type.enum';
+import { SellingType } from '../property/enums/selling-type.enum';
 
 @Injectable()
 export class PropertyApprovalService {
   public constructor(private readonly repoService: RepositoryService) {}
 
   async update(propertyId: string, payload: UpdatePropertyApprovalDto) {
-    const approval = await this.repoService.propertyApprovalRepo.findOne({
-      where: { propertyId: propertyId, agentId: payload.userId },
-    });
+    const approval = await this.repoService.propertyApprovalRepo
+      .createQueryBuilder('approval')
+      .leftJoinAndSelect('approval.property', 'property')
+      .leftJoinAndSelect('property.address', 'address')
+      .where('approval.propertyId = :propertyId', { propertyId: propertyId })
+      .andWhere('approval.agentId = :agentId', { agentId: payload.userId })
+      .getOne();
     await Promise.all([
       this.isPropertyApprovalExist(approval),
       this.isStatusAllowed(payload.status),
@@ -28,11 +35,12 @@ export class PropertyApprovalService {
         },
       ),
     ]);
-
     if (payload.status == ApprovalStatus.APPROVED.toString()) {
-      const propertNumber = await this.generatePropertyNumber();
+      const propertyNumber = await this.generatePropertyNumber(
+        approval.property,
+      );
       this.repoService.propertyRepo.update(propertyId, {
-        propertyNumber: propertNumber,
+        propertyNumber: propertyNumber,
       });
     }
 
@@ -92,15 +100,53 @@ export class PropertyApprovalService {
     );
   }
 
-  private async generatePropertyNumber(): Promise<string> {
+  private async generatePropertyNumber(property: Property): Promise<string> {
     const lastApproved = await this.repoService.propertyRepo
       .createQueryBuilder()
-      .where('propertyNumber IS NOT NULL')
-      .orderBy('propertyNumber', 'DESC')
+      .where('property_number IS NOT NULL')
+      .orderBy('property_number', 'DESC')
       .getOne();
-
-    return lastApproved.propertyNumber
-      ? (lastApproved.propertyNumber + 1).toString()
+    const number = lastApproved.propertyNumber
+      ? (Number(lastApproved.propertyNumber.split('/', 1)[0]) + 1).toString()
       : '1';
+    return `${number}/${this.getPropertyTypeCode(
+      property.propertyType,
+    )}/${this.getPropertySellingTypeCode(
+      property.sellingType,
+    )}/${this.getPropertyLocationCode(property.address.subdistrict)}`;
+  }
+
+  private getPropertyTypeCode(type: string) {
+    const typeCode = {
+      [PropertyType.APARTMENT.toString()]: 'AP',
+      [PropertyType.HOUSE.toString()]: 'HS',
+      [PropertyType.HOTEL.toString()]: 'HT',
+      [PropertyType.LAND.toString()]: 'LN',
+      [PropertyType.VILLA.toString()]: 'VL',
+    };
+    return typeCode[type] || 'NEW';
+  }
+
+  private getPropertySellingTypeCode(type: string) {
+    const typeCode = {
+      [SellingType.RENT]: 'RN',
+      [SellingType.SELL]: 'SL',
+    };
+    return typeCode[type] || type;
+  }
+
+  private getPropertyLocationCode(location: string) {
+    const typeCode = {
+      Canggu: 'CNG',
+      Denpasar: 'DPS',
+      Jimbaran: 'JBR',
+      Kuta: 'KTA',
+      Nusadua: 'NUS',
+      Sanur: 'SAN',
+      Tabanan: 'TAB',
+      Ubud: 'UBD',
+      Uluwatu: 'UWT',
+    };
+    return typeCode[location] || location;
   }
 }
