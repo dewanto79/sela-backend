@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { SellingType } from '../enums/selling-type.enum';
 import { PropertyStatus } from '../enums/property-status.enum';
+import { PropertyType } from '../enums/property-type.enum';
 
 class Tag {
   @ApiProperty({ nullable: false })
@@ -111,9 +112,10 @@ export class CreatePropertyDto {
   @IsEnum(SellingType, {})
   sellingType: SellingType;
 
-  @ApiProperty()
+  @ApiProperty({ default: PropertyType.HOUSE })
   @IsNotEmpty()
-  propertyType: string;
+  @IsEnum(PropertyType, {})
+  propertyType: PropertyType;
 
   @ApiProperty()
   @IsNotEmpty()
