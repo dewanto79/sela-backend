@@ -106,14 +106,15 @@ export class PropertyApprovalService {
       .where('property_number IS NOT NULL')
       .orderBy('property_number', 'DESC')
       .getOne();
-    const number = lastApproved.propertyNumber
+
+    const number = lastApproved?.propertyNumber
       ? (Number(lastApproved.propertyNumber.split('/', 1)[0]) + 1).toString()
       : '1';
     return `${number}/${this.getPropertyTypeCode(
       property.propertyType,
     )}/${this.getPropertySellingTypeCode(
       property.sellingType,
-    )}/${this.getPropertyLocationCode(property.address.subdistrict)}`;
+    )}/${this.getMonthYearCode()}`;
   }
 
   private getPropertyTypeCode(type: string) {
@@ -135,18 +136,25 @@ export class PropertyApprovalService {
     return typeCode[type] || type;
   }
 
-  private getPropertyLocationCode(location: string) {
-    const typeCode = {
-      Canggu: 'CNG',
-      Denpasar: 'DPS',
-      Jimbaran: 'JBR',
-      Kuta: 'KTA',
-      Nusadua: 'NUS',
-      Sanur: 'SAN',
-      Tabanan: 'TAB',
-      Ubud: 'UBD',
-      Uluwatu: 'UWT',
+  private getMonthYearCode() {
+    const currentTime = new Date();
+    const month = currentTime.getMonth() + 1;
+    const year = currentTime.getFullYear();
+
+    const monthRomawi = {
+      1: 'I',
+      2: 'II',
+      3: 'III',
+      4: 'IV',
+      5: 'V',
+      6: 'VI',
+      7: 'VII',
+      8: 'VIII',
+      9: 'IX',
+      10: 'X',
+      11: 'XI',
+      12: 'XII',
     };
-    return typeCode[location] || location;
+    return `${monthRomawi[month]}/${year}`;
   }
 }

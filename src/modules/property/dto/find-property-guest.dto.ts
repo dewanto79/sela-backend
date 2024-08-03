@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNumberString, IsOptional } from 'class-validator';
 import { SellingType } from '../enums/selling-type.enum';
 import { ToBoolean } from 'src/decorator/to-boolean';
+import { Transform } from 'class-transformer';
 
 export class FindPropertyGuestDto {
   @ApiProperty({ required: false })
@@ -31,6 +32,7 @@ export class FindPropertyGuestDto {
     enum: SellingType,
     required: false,
   })
+  @Transform((params) => (params.value === '' ? null : params.value))
   @IsEnum(SellingType, { always: false })
   @IsOptional()
   sellingType?: SellingType;
