@@ -465,7 +465,7 @@ export class PropertyService {
           error_code: 'BAD_REQUEST',
           message: 'status is not allowed',
         },
-        HttpStatus.NOT_FOUND,
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -473,7 +473,6 @@ export class PropertyService {
   private async isUpdatePropertyAllowed(status: string) {
     const notAllowedStatus = [
       PropertyStatus.IN_REVIEW.toString(),
-      PropertyStatus.APPROVED.toString(),
       PropertyStatus.REJECTED.toString(),
     ];
     if (notAllowedStatus.includes(status)) {
@@ -483,7 +482,7 @@ export class PropertyService {
           error_code: 'BAD_REQUEST',
           message: 'status is not allowed',
         },
-        HttpStatus.NOT_FOUND,
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
