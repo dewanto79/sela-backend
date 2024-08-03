@@ -3,6 +3,7 @@ import { IsEnum, IsNumberString, IsOptional } from 'class-validator';
 import { AdminResponse } from 'src/modules/admin/dto/response/admin.response';
 import { SellingType } from '../enums/selling-type.enum';
 import { ToBoolean } from 'src/decorator/to-boolean';
+import { Transform } from 'class-transformer';
 
 export class FindPropertyDto {
   user?: AdminResponse;
@@ -38,6 +39,7 @@ export class FindPropertyDto {
     enum: SellingType,
     required: false,
   })
+  @Transform((params) => (params.value === '' ? null : params.value))
   @IsEnum(SellingType, { always: false })
   @IsOptional()
   sellingType?: SellingType;
