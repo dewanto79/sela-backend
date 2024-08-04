@@ -13,6 +13,7 @@ import { Facility } from 'src/models/entities/facility.entity';
 import { UpdatePublishedDto } from './dto/update-published.dto';
 import { PropertyStatus } from './enums/property-status.enum';
 import { ApprovalStatus } from '../property-approval/enums/approval-status.enum';
+import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 
 @Injectable()
 export class PropertyService {
@@ -62,15 +63,26 @@ export class PropertyService {
       this.handleSavingImage(propertyData.id, payload.images),
     ]);
 
+    const agent = await this.repoService.agentRepo.findOne({
+      where: { id: payload.userId },
+    });
+
     if (payload.status == PropertyStatus.IN_REVIEW) {
-      const admins = await this.repoService.adminRepo.find();
-      for (const admin of admins) {
-        await this.repoService.propertyApprovalRepo.save({
-          propertyId: propertyData.id,
-          agentId: admin.id,
-          note: '',
-          status: ApprovalStatus.IN_REVIEW,
-        });
+      if (!agent) {
+        await this.repoService.propertyRepo.update(
+          { id: propertyData.id },
+          { status: PropertyStatus.APPROVED },
+        );
+      } else {
+        const admins = await this.repoService.adminRepo.find();
+        for (const admin of admins) {
+          await this.repoService.propertyApprovalRepo.save({
+            propertyId: propertyData.id,
+            agentId: admin.id,
+            note: '',
+            status: ApprovalStatus.IN_REVIEW,
+          });
+        }
       }
     }
 
@@ -226,9 +238,17 @@ export class PropertyService {
       .leftJoinAndSelect('property.images', 'images')
       .leftJoinAndSelect('property.approvals', 'approvals')
       .leftJoinAndSelect('property.agent', 'agent')
+      .leftJoinAndSelect('property.admin', 'admin')
       .where('property.id = :id', { id: id })
       .getOne();
-    return await this.isPropertyExist(property);
+    await this.isPropertyExist(property);
+
+    property.createdByName = property.admin?.name || property.agent?.name;
+
+    delete property.admin;
+    delete property.agent;
+
+    return property;
   }
 
   async update(id: string, payload: UpdatePropertyDto) {
@@ -307,7 +327,7 @@ export class PropertyService {
     }
     return {
       ...payload,
-      address: addressData,
+      address: payload.address,
       tags: savedTag,
       facilities: savedFacility,
       images: savedImage,
@@ -339,6 +359,21 @@ export class PropertyService {
     ]);
     await this.repoService.propertyRepo.update(id, {
       published: payload.published,
+    });
+    return property;
+  }
+
+  async updateAvailability(id: string, payload: UpdateAvailabilityDto) {
+    const property = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .where('property.id = :id', { id: id })
+      .getOne();
+    await Promise.all([
+      this.isPropertyExist(property),
+      this.isPropertyApproved(property),
+    ]);
+    await this.repoService.propertyRepo.update(id, {
+      availability: payload.availability,
     });
     return property;
   }
