@@ -31,8 +31,7 @@ export class PropertyController {
   @RolesAuth(AdminRole.ADMIN, AdminRole.LISTING_AGENT)
   @Post()
   async create(@Body() payload: CreatePropertyDto, @Request() req) {
-    const userJwt = req.user;
-    payload.userId = userJwt.id;
+    payload.user = req.user;
     return await this.propertyService.create(payload);
   }
 
@@ -72,8 +71,7 @@ export class PropertyController {
     @Body() payload: UpdatePropertyDto,
     @Request() req,
   ) {
-    const userJwt = req.user;
-    payload.userId = userJwt.id;
+    payload.user = req.user;
     return await this.propertyService.update(id, payload);
   }
 

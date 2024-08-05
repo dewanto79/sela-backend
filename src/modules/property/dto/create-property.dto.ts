@@ -12,6 +12,7 @@ import {
 import { SellingType } from '../enums/selling-type.enum';
 import { PropertyStatus } from '../enums/property-status.enum';
 import { PropertyType } from '../enums/property-type.enum';
+import { AdminResponse } from 'src/modules/admin/dto/response/admin.response';
 
 class Tag {
   @ApiProperty({ nullable: false })
@@ -221,5 +222,5 @@ export class CreatePropertyDto {
   images: [Image];
 
   @ApiHideProperty()
-  userId: string;
+  user: AdminResponse;
 }
