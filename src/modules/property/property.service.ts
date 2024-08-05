@@ -311,14 +311,21 @@ export class PropertyService {
       this.handleSavingImage(id, payload.images),
     ]);
     if (payload.status == PropertyStatus.IN_REVIEW) {
-      const admins = await this.repoService.adminRepo.find();
-      for (const admin of admins) {
-        await this.repoService.propertyApprovalRepo.save({
-          propertyId: id,
-          agentId: admin.id,
-          note: '',
-          status: ApprovalStatus.IN_REVIEW,
-        });
+      if (payload.user.roles.includes(AdminRole.ADMIN)) {
+        await this.repoService.propertyRepo.update(
+          { id: id },
+          { status: PropertyStatus.APPROVED },
+        );
+      } else {
+        const admins = await this.repoService.adminRepo.find();
+        for (const admin of admins) {
+          await this.repoService.propertyApprovalRepo.save({
+            propertyId: id,
+            agentId: admin.id,
+            note: '',
+            status: ApprovalStatus.IN_REVIEW,
+          });
+        }
       }
     }
     return {
