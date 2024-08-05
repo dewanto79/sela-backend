@@ -14,6 +14,9 @@ import { UpdatePublishedDto } from './dto/update-published.dto';
 import { PropertyStatus } from './enums/property-status.enum';
 import { ApprovalStatus } from '../property-approval/enums/approval-status.enum';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
+import { Admin } from 'src/models/entities/admin.entity';
+import { Agent } from 'src/models/entities/agent.entity';
+import { AdminResponse } from '../admin/dto/response/admin.response';
 
 @Injectable()
 export class PropertyService {
@@ -29,7 +32,7 @@ export class PropertyService {
       locationMaps: payload.address.locationMaps ?? null,
     });
     const propertyData = await this.repoService.propertyRepo.save({
-      agentId: payload.userId,
+      agentId: payload.user.id,
       title: payload.title,
       descriptionId: payload.descriptionId,
       keyFeatureId: payload.keyFeatureId,
@@ -63,12 +66,8 @@ export class PropertyService {
       this.handleSavingImage(propertyData.id, payload.images),
     ]);
 
-    const agent = await this.repoService.agentRepo.findOne({
-      where: { id: payload.userId },
-    });
-
     if (payload.status == PropertyStatus.IN_REVIEW) {
-      if (!agent) {
+      if (payload.user.roles.includes(AdminRole.ADMIN)) {
         await this.repoService.propertyRepo.update(
           { id: propertyData.id },
           { status: PropertyStatus.APPROVED },
@@ -260,7 +259,7 @@ export class PropertyService {
       this.isPropertyExist(property), // check property exist
       this.isUpdatePropertyAllowed(property.status), // check is status allowed to update
       this.isCreatePropertyStatusValid(payload.status), // check inputed status
-      this.isCreatedByAgent(payload.userId, property.agentId), // check is created by the same agent
+      this.isCreatedByAgentOrAdmin(payload.user, property.agentId), // check is created by the same agent
     ]);
     // delete address, tag, facility, image
     await Promise.all([
@@ -270,16 +269,13 @@ export class PropertyService {
     ]);
 
     // save address
-    const addressData = await this.repoService.addressRepo.update(
-      property.addressId,
-      {
-        subdistrict: payload.address.subdistrict,
-        regency: payload.address.regency,
-        province: payload.address.province,
-        detail: payload.address.detail ?? null,
-        locationMaps: payload.address.locationMaps ?? null,
-      },
-    );
+    await this.repoService.addressRepo.update(property.addressId, {
+      subdistrict: payload.address.subdistrict,
+      regency: payload.address.regency,
+      province: payload.address.province,
+      detail: payload.address.detail ?? null,
+      locationMaps: payload.address.locationMaps ?? null,
+    });
 
     // update property
     await this.repoService.propertyRepo.update(id, {
@@ -522,8 +518,11 @@ export class PropertyService {
     }
   }
 
-  private async isCreatedByAgent(userId: string, agentId: string) {
-    if (userId != agentId) {
+  private async isCreatedByAgentOrAdmin(user: AdminResponse, agentId: string) {
+    if (user.roles.includes(AdminRole.ADMIN)) {
+      return;
+    }
+    if (user.id != agentId) {
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
