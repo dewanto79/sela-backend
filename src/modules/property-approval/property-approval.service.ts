@@ -6,6 +6,7 @@ import { ApprovalStatus } from './enums/approval-status.enum';
 import { Property } from 'src/models/entities/property.entity';
 import { PropertyType } from '../property/enums/property-type.enum';
 import { SellingType } from '../property/enums/selling-type.enum';
+import { In, Not } from 'typeorm';
 
 @Injectable()
 export class PropertyApprovalService {
@@ -18,6 +19,7 @@ export class PropertyApprovalService {
       .leftJoinAndSelect('property.address', 'address')
       .where('approval.propertyId = :propertyId', { propertyId: propertyId })
       .andWhere('approval.agentId = :agentId', { agentId: payload.userId })
+      .orderBy('approval.createdAt', 'DESC')
       .getOne();
     await Promise.all([
       this.isPropertyApprovalExist(approval),
@@ -28,8 +30,18 @@ export class PropertyApprovalService {
       this.repoService.propertyRepo.update(propertyId, {
         status: payload.status,
       }),
+      // update approval status to ALREADY_MOVED if user not doing approval
       this.repoService.propertyApprovalRepo.update(
-        { propertyId: propertyId },
+        {
+          propertyId: propertyId,
+          status: Not(
+            In([
+              ApprovalStatus.APPROVED,
+              ApprovalStatus.REJECTED,
+              ApprovalStatus.ASK_REVISION,
+            ]),
+          ),
+        },
         {
           status: ApprovalStatus.ALREADY_MOVED,
         },
