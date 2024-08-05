@@ -17,10 +17,14 @@ import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 import { Admin } from 'src/models/entities/admin.entity';
 import { Agent } from 'src/models/entities/agent.entity';
 import { AdminResponse } from '../admin/dto/response/admin.response';
+import { PropertyApprovalService } from '../property-approval/property-approval.service';
 
 @Injectable()
 export class PropertyService {
-  public constructor(private readonly repoService: RepositoryService) {}
+  public constructor(
+    private readonly repoService: RepositoryService,
+    private readonly propertyApprovalService: PropertyApprovalService,
+  ) {}
 
   async create(payload: CreatePropertyDto) {
     await this.isCreatePropertyStatusValid(payload.status);
@@ -68,9 +72,13 @@ export class PropertyService {
 
     if (payload.status == PropertyStatus.IN_REVIEW) {
       if (payload.user.roles.includes(AdminRole.ADMIN)) {
+        const propertyNumber =
+          await this.propertyApprovalService.generatePropertyNumber(
+            propertyData,
+          );
         await this.repoService.propertyRepo.update(
           { id: propertyData.id },
-          { status: PropertyStatus.APPROVED },
+          { status: PropertyStatus.APPROVED, propertyNumber: propertyNumber },
         );
       } else {
         const admins = await this.repoService.adminRepo.find();
@@ -310,12 +318,24 @@ export class PropertyService {
       this.handleSavingFacility(id, payload.facilities),
       this.handleSavingImage(id, payload.images),
     ]);
+
+    //check if payload status is in review
     if (payload.status == PropertyStatus.IN_REVIEW) {
+      // check is the editor is admin
       if (payload.user.roles.includes(AdminRole.ADMIN)) {
-        await this.repoService.propertyRepo.update(
-          { id: id },
-          { status: PropertyStatus.APPROVED },
-        );
+        if (property.propertyNumber) {
+          await this.repoService.propertyRepo.update(
+            { id: id },
+            { status: PropertyStatus.APPROVED },
+          );
+        } else {
+          const propertyNumber =
+            await this.propertyApprovalService.generatePropertyNumber(property);
+          await this.repoService.propertyRepo.update(
+            { id: id },
+            { status: PropertyStatus.APPROVED, propertyNumber: propertyNumber },
+          );
+        }
       } else {
         const admins = await this.repoService.adminRepo.find();
         for (const admin of admins) {

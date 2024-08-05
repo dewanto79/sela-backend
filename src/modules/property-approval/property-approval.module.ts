@@ -7,5 +7,6 @@ import { RepositoryModule } from 'src/models/repository.module';
   imports: [RepositoryModule],
   controllers: [PropertyApprovalController],
   providers: [PropertyApprovalService],
+  exports: [PropertyApprovalService],
 })
 export class PropertyApprovalModule {}
