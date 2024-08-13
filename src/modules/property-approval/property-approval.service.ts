@@ -64,9 +64,13 @@ export class PropertyApprovalService {
 
   async generatePropertyNumber(property: Property): Promise<string> {
     const lastApproved = await this.repoService.propertyRepo
-      .createQueryBuilder()
-      .where('property_number IS NOT NULL')
-      .orderBy('property_number', 'DESC')
+      .createQueryBuilder('property')
+      .where('property.property_number IS NOT NULL')
+      .orderBy(
+        `LENGTH(SUBSTRING(property.property_number, 0, POSITION('/' IN property.property_number) + 1))`,
+        'DESC',
+      )
+      .addOrderBy('property.property_number', 'DESC')
       .getOne();
 
     const number = lastApproved?.propertyNumber
