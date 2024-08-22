@@ -1,4 +1,8 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -98,6 +102,9 @@ export class CreatePropertyDto {
   })
   @IsNotEmpty()
   price: number;
+
+  @ApiPropertyOptional({ default: 'IDR' })
+  currency: string;
 
   @ApiProperty({ default: PropertyStatus.DRAFT })
   @IsNotEmpty()

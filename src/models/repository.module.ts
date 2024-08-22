@@ -13,6 +13,7 @@ import { Agent } from './entities/agent.entity';
 import { Role } from './entities/role.entity';
 import { AgentRole } from './entities/agent-role.entity';
 import { PropertyApproval } from './entities/property-approval.entity';
+import { Currency } from './entities/currency.entity';
 
 @Global()
 @Module({
@@ -30,6 +31,7 @@ import { PropertyApproval } from './entities/property-approval.entity';
       Role,
       AgentRole,
       PropertyApproval,
+      Currency,
     ]),
   ],
   providers: [RepositoryService],
