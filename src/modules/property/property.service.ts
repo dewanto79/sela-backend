@@ -5,7 +5,7 @@ import RepositoryService from 'src/models/repository.service';
 import { Tag } from 'src/models/entities/tag.entity';
 import { Property } from 'src/models/entities/property.entity';
 import { UpdatePropertyStatusDto } from './dto/update-status.dto';
-import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import { FindPropertyDto } from './dto/find-property.dto';
 import { AdminRole } from '../admin/enums/role.enum';
 import { Brackets } from 'typeorm';
@@ -14,8 +14,6 @@ import { UpdatePublishedDto } from './dto/update-published.dto';
 import { PropertyStatus } from './enums/property-status.enum';
 import { ApprovalStatus } from '../property-approval/enums/approval-status.enum';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
-import { Admin } from 'src/models/entities/admin.entity';
-import { Agent } from 'src/models/entities/agent.entity';
 import { AdminResponse } from '../admin/dto/response/admin.response';
 import { PropertyApprovalService } from '../property-approval/property-approval.service';
 
@@ -43,6 +41,7 @@ export class PropertyService {
       descriptionEn: payload.descriptionEn,
       keyFeatureEn: payload.keyFeatureEn,
       price: payload.price,
+      currencyId: payload?.currency ?? 'IDR',
       status: payload.status,
       availability: payload.availability,
       sellingType: payload.sellingType,
@@ -109,8 +108,11 @@ export class PropertyService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .leftJoin('property.currency', 'currency')
+      .addSelect(['currency.id', 'currency.symbolNative'])
       .leftJoin('property.agent', 'agent')
       .addSelect(['agent.name']);
+
     if (payload.keyword && payload.keyword != '') {
       data = data.andWhere(
         new Brackets((qb) => {
@@ -240,6 +242,7 @@ export class PropertyService {
     const property = await this.repoService.propertyRepo
       .createQueryBuilder('property')
       .leftJoinAndSelect('property.address', 'address')
+      .leftJoinAndSelect('property.currency', 'currency')
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
@@ -293,6 +296,7 @@ export class PropertyService {
       descriptionEn: payload.descriptionEn,
       keyFeatureEn: payload.keyFeatureEn,
       price: payload.price,
+      currencyId: payload?.currency ?? 'IDR',
       status: payload.status,
       availability: payload.availability,
       propertyType: payload.propertyType,
