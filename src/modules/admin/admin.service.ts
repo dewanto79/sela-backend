@@ -18,7 +18,7 @@ export class AdminService {
 
   async getByEmail(email: string): Promise<AdminResponse> {
     const admin = await this.repoService.adminRepo.findOne({
-      where: { email: email },
+      where: { email: email, status: 'active' },
       select: ['id', 'email', 'name', 'password', 'roles', 'status'],
     });
 
