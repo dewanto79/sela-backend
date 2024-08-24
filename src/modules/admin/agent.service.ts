@@ -20,6 +20,7 @@ export class AgentService {
       .leftJoin('agent.roles', 'roles')
       .addSelect('roles.name')
       .where('agent.email = :email', { email })
+      .andWhere('agent.status = :status', { status: 'active' })
       .getOne();
 
     await this.isAgentExist(agent);
@@ -34,7 +35,7 @@ export class AgentService {
       email: payload.email,
       name: payload.name,
       roles: arrayRole,
-      status: 'active',
+      status: payload.status,
       password: payload.password,
     };
   }
