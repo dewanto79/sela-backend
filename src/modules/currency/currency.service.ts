@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import RepositoryService from 'src/models/repository.service';
 import { FetchCurrencyResponse } from './dto/response/fetch-currency.interface';
@@ -49,6 +49,40 @@ export class CurrencyService {
         currencyRate: rate,
       });
     }
+  }
+
+  async getRate(currencyId: string) {
+    const currencies = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .select('property.currencyId')
+      .leftJoin('property.currency', 'currency')
+      .addSelect(['currency.currencyRate'])
+      .distinctOn(['property.currencyId'])
+      .where('property.currencyId IS NOT NULL')
+      .getRawMany();
+
+    const currency = currencies.find(
+      (currency) => currency.property_currency_id === currencyId.toUpperCase(),
+    );
+    if (!currency) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          errorCode: 'BAD_REQUEST',
+          message: 'currency not found in property',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const currencyRates = currencies.map((cur) => {
+      return {
+        ...cur,
+        currency_rate:
+          cur.currency_currency_rate / currency.currency_currency_rate,
+      };
+    });
+    return currencyRates;
   }
 
   private async fetchCurrency(): Promise<FetchCurrencyResponse> {
