@@ -3,10 +3,15 @@ import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import RepositoryService from 'src/models/repository.service';
 import { Property } from 'src/models/entities/property.entity';
 import { FindPropertyGuestDto } from '../dto/find-property-guest.dto';
+import { CurrencyService } from 'src/modules/currency/currency.service';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class PropertyGuestService {
-  public constructor(private readonly repoService: RepositoryService) {}
+  public constructor(
+    private readonly repoService: RepositoryService,
+    private readonly currencyService: CurrencyService,
+  ) {}
 
   async findAll(options: IPaginationOptions, payload: FindPropertyGuestDto) {
     let data = this.repoService.propertyRepo
@@ -22,15 +27,57 @@ export class PropertyGuestService {
         title: '%' + payload.keyword + '%',
       });
     }
-    if (payload.lowerPrice && payload.lowerPrice > 0) {
-      data = data.andWhere('property.price >= :lowerPrice', {
-        lowerPrice: payload.lowerPrice,
-      });
-    }
-    if (payload.higherPrice && payload.higherPrice > 0) {
-      data = data.andWhere('property.price <= :higherPrice', {
-        higherPrice: payload.higherPrice,
-      });
+    if (payload.lowerPrice || payload.higherPrice) {
+      let currencyRates;
+      if (payload.currency) {
+        currencyRates = await this.currencyService.getRate(payload.currency);
+      } else {
+        currencyRates = await this.currencyService.getRate('IDR');
+      }
+
+      if (payload.lowerPrice && payload.lowerPrice > 0) {
+        data = data.andWhere(
+          new Brackets((qb) => {
+            for (const currencyRate of currencyRates) {
+              qb.orWhere(
+                new Brackets((qb2) => {
+                  qb2
+                    .where(
+                      `property.price >= ${
+                        payload.lowerPrice * currencyRate.currency_rate
+                      }`,
+                    )
+                    .andWhere(
+                      `property.currencyId = '${currencyRate.property_currency_id}'`,
+                    );
+                }),
+              );
+            }
+          }),
+        );
+      }
+
+      if (payload.higherPrice && payload.higherPrice > 0) {
+        data = data.andWhere(
+          new Brackets((qb) => {
+            for (const currencyRate of currencyRates) {
+              qb.orWhere(
+                new Brackets((qb2) => {
+                  qb2
+                    .where(
+                      `property.price <= ${
+                        payload.higherPrice * currencyRate.currency_rate
+                      }`,
+                    )
+                    .andWhere(
+                      `property.currencyId = '${currencyRate.property_currency_id}'`,
+                    );
+                }),
+              );
+            }
+          }),
+        );
+      }
     }
     if (payload.availability && payload.availability != '') {
       data = data.andWhere('property.availability = :availability', {

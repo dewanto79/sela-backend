@@ -12,7 +12,7 @@ export class CronjobService {
   }
 
   //server running at UTC+0
-  @Cron(CronExpression.EVERY_DAY_AT_10PM)
+  @Cron(CronExpression.EVERY_DAY_AT_5PM)
   handleUpdateCurrencyRate() {
     console.log(`Update currency rate running ${new Date()} ...`);
     this.currencyService.updateCurrencyRate();
