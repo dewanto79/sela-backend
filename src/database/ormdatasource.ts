@@ -1,12 +1,13 @@
 import * as dotenv from 'dotenv';
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { SeederOptions } from 'typeorm-extension';
 
 dotenv.config();
 
 const dir = process.env.NODE_ENV == 'migration' ? 'src' : 'dist';
-export const connectionSource = new DataSource({
-  type: 'postgres',
+const options: DataSourceOptions & SeederOptions = {
   host: process.env.DATABASE_HOST,
+  type: 'postgres',
   port: Number(process.env.DATABASE_PORT),
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
@@ -17,4 +18,7 @@ export const connectionSource = new DataSource({
   name: 'default',
   entities: [`${dir}/**/*.entity.{js,ts}`],
   migrations: [`${dir}/models/migrations/*.{js,ts}`],
-});
+  seeds: [`${dir}/models/migrations/seeds/*.seed.{js,ts}`],
+};
+
+export const connectionSource = new DataSource(options);

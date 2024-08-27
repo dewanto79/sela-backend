@@ -6,6 +6,7 @@ import { ApprovalStatus } from './enums/approval-status.enum';
 import { Property } from 'src/models/entities/property.entity';
 import { PropertyType } from '../property/enums/property-type.enum';
 import { SellingType } from '../property/enums/selling-type.enum';
+import { In, Not } from 'typeorm';
 
 @Injectable()
 export class PropertyApprovalService {
@@ -18,6 +19,7 @@ export class PropertyApprovalService {
       .leftJoinAndSelect('property.address', 'address')
       .where('approval.propertyId = :propertyId', { propertyId: propertyId })
       .andWhere('approval.agentId = :agentId', { agentId: payload.userId })
+      .orderBy('approval.createdAt', 'DESC')
       .getOne();
     await Promise.all([
       this.isPropertyApprovalExist(approval),
@@ -28,8 +30,18 @@ export class PropertyApprovalService {
       this.repoService.propertyRepo.update(propertyId, {
         status: payload.status,
       }),
+      // update approval status to ALREADY_MOVED if user not doing approval
       this.repoService.propertyApprovalRepo.update(
-        { propertyId: propertyId },
+        {
+          propertyId: propertyId,
+          status: Not(
+            In([
+              ApprovalStatus.APPROVED,
+              ApprovalStatus.REJECTED,
+              ApprovalStatus.ASK_REVISION,
+            ]),
+          ),
+        },
         {
           status: ApprovalStatus.ALREADY_MOVED,
         },
@@ -48,6 +60,27 @@ export class PropertyApprovalService {
       note: payload.note,
       status: payload.status,
     });
+  }
+
+  async generatePropertyNumber(property: Property): Promise<string> {
+    const lastApproved = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .where('property.property_number IS NOT NULL')
+      .orderBy(
+        `LENGTH(SUBSTRING(property.property_number, 0, POSITION('/' IN property.property_number) + 1))`,
+        'DESC',
+      )
+      .addOrderBy('property.property_number', 'DESC')
+      .getOne();
+
+    const number = lastApproved?.propertyNumber
+      ? (Number(lastApproved.propertyNumber.split('/', 1)[0]) + 1).toString()
+      : '1';
+    return `${number}/${this.getPropertyTypeCode(
+      property.propertyType,
+    )}/${this.getPropertySellingTypeCode(
+      property.sellingType,
+    )}/${this.getMonthYearCode()}`;
   }
 
   private async isPropertyApprovalExist(
@@ -98,23 +131,6 @@ export class PropertyApprovalService {
       },
       HttpStatus.NOT_FOUND,
     );
-  }
-
-  private async generatePropertyNumber(property: Property): Promise<string> {
-    const lastApproved = await this.repoService.propertyRepo
-      .createQueryBuilder()
-      .where('property_number IS NOT NULL')
-      .orderBy('property_number', 'DESC')
-      .getOne();
-
-    const number = lastApproved?.propertyNumber
-      ? (Number(lastApproved.propertyNumber.split('/', 1)[0]) + 1).toString()
-      : '1';
-    return `${number}/${this.getPropertyTypeCode(
-      property.propertyType,
-    )}/${this.getPropertySellingTypeCode(
-      property.sellingType,
-    )}/${this.getMonthYearCode()}`;
   }
 
   private getPropertyTypeCode(type: string) {

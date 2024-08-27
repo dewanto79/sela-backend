@@ -5,7 +5,7 @@ import RepositoryService from 'src/models/repository.service';
 import { Tag } from 'src/models/entities/tag.entity';
 import { Property } from 'src/models/entities/property.entity';
 import { UpdatePropertyStatusDto } from './dto/update-status.dto';
-import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import { FindPropertyDto } from './dto/find-property.dto';
 import { AdminRole } from '../admin/enums/role.enum';
 import { Brackets } from 'typeorm';
@@ -13,10 +13,16 @@ import { Facility } from 'src/models/entities/facility.entity';
 import { UpdatePublishedDto } from './dto/update-published.dto';
 import { PropertyStatus } from './enums/property-status.enum';
 import { ApprovalStatus } from '../property-approval/enums/approval-status.enum';
+import { UpdateAvailabilityDto } from './dto/update-availability.dto';
+import { AdminResponse } from '../admin/dto/response/admin.response';
+import { PropertyApprovalService } from '../property-approval/property-approval.service';
 
 @Injectable()
 export class PropertyService {
-  public constructor(private readonly repoService: RepositoryService) {}
+  public constructor(
+    private readonly repoService: RepositoryService,
+    private readonly propertyApprovalService: PropertyApprovalService,
+  ) {}
 
   async create(payload: CreatePropertyDto) {
     await this.isCreatePropertyStatusValid(payload.status);
@@ -28,13 +34,14 @@ export class PropertyService {
       locationMaps: payload.address.locationMaps ?? null,
     });
     const propertyData = await this.repoService.propertyRepo.save({
-      agentId: payload.userId,
+      agentId: payload.user.id,
       title: payload.title,
       descriptionId: payload.descriptionId,
       keyFeatureId: payload.keyFeatureId,
       descriptionEn: payload.descriptionEn,
       keyFeatureEn: payload.keyFeatureEn,
       price: payload.price,
+      currencyId: payload?.currency ?? 'IDR',
       status: payload.status,
       availability: payload.availability,
       sellingType: payload.sellingType,
@@ -63,14 +70,25 @@ export class PropertyService {
     ]);
 
     if (payload.status == PropertyStatus.IN_REVIEW) {
-      const admins = await this.repoService.adminRepo.find();
-      for (const admin of admins) {
-        await this.repoService.propertyApprovalRepo.save({
-          propertyId: propertyData.id,
-          agentId: admin.id,
-          note: '',
-          status: ApprovalStatus.IN_REVIEW,
-        });
+      if (payload.user.roles.includes(AdminRole.ADMIN)) {
+        const propertyNumber =
+          await this.propertyApprovalService.generatePropertyNumber(
+            propertyData,
+          );
+        await this.repoService.propertyRepo.update(
+          { id: propertyData.id },
+          { status: PropertyStatus.APPROVED, propertyNumber: propertyNumber },
+        );
+      } else {
+        const admins = await this.repoService.adminRepo.find();
+        for (const admin of admins) {
+          await this.repoService.propertyApprovalRepo.save({
+            propertyId: propertyData.id,
+            agentId: admin.id,
+            note: '',
+            status: ApprovalStatus.IN_REVIEW,
+          });
+        }
       }
     }
 
@@ -90,8 +108,11 @@ export class PropertyService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .leftJoin('property.currency', 'currency')
+      .addSelect(['currency.id', 'currency.symbolNative'])
       .leftJoin('property.agent', 'agent')
       .addSelect(['agent.name']);
+
     if (payload.keyword && payload.keyword != '') {
       data = data.andWhere(
         new Brackets((qb) => {
@@ -221,14 +242,23 @@ export class PropertyService {
     const property = await this.repoService.propertyRepo
       .createQueryBuilder('property')
       .leftJoinAndSelect('property.address', 'address')
+      .leftJoinAndSelect('property.currency', 'currency')
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
       .leftJoinAndSelect('property.approvals', 'approvals')
       .leftJoinAndSelect('property.agent', 'agent')
+      .leftJoinAndSelect('property.admin', 'admin')
       .where('property.id = :id', { id: id })
       .getOne();
-    return await this.isPropertyExist(property);
+    await this.isPropertyExist(property);
+
+    property.createdByName = property.admin?.name || property.agent?.name;
+
+    delete property.admin;
+    delete property.agent;
+
+    return property;
   }
 
   async update(id: string, payload: UpdatePropertyDto) {
@@ -240,7 +270,7 @@ export class PropertyService {
       this.isPropertyExist(property), // check property exist
       this.isUpdatePropertyAllowed(property.status), // check is status allowed to update
       this.isCreatePropertyStatusValid(payload.status), // check inputed status
-      this.isCreatedByAgent(payload.userId, property.agentId), // check is created by the same agent
+      this.isCreatedByAgentOrAdmin(payload.user, property.agentId), // check is created by the same agent
     ]);
     // delete address, tag, facility, image
     await Promise.all([
@@ -250,16 +280,13 @@ export class PropertyService {
     ]);
 
     // save address
-    const addressData = await this.repoService.addressRepo.update(
-      property.addressId,
-      {
-        subdistrict: payload.address.subdistrict,
-        regency: payload.address.regency,
-        province: payload.address.province,
-        detail: payload.address.detail ?? null,
-        locationMaps: payload.address.locationMaps ?? null,
-      },
-    );
+    await this.repoService.addressRepo.update(property.addressId, {
+      subdistrict: payload.address.subdistrict,
+      regency: payload.address.regency,
+      province: payload.address.province,
+      detail: payload.address.detail ?? null,
+      locationMaps: payload.address.locationMaps ?? null,
+    });
 
     // update property
     await this.repoService.propertyRepo.update(id, {
@@ -269,6 +296,7 @@ export class PropertyService {
       descriptionEn: payload.descriptionEn,
       keyFeatureEn: payload.keyFeatureEn,
       price: payload.price,
+      currencyId: payload?.currency ?? 'IDR',
       status: payload.status,
       availability: payload.availability,
       propertyType: payload.propertyType,
@@ -294,20 +322,39 @@ export class PropertyService {
       this.handleSavingFacility(id, payload.facilities),
       this.handleSavingImage(id, payload.images),
     ]);
+
+    //check if payload status is in review
     if (payload.status == PropertyStatus.IN_REVIEW) {
-      const admins = await this.repoService.adminRepo.find();
-      for (const admin of admins) {
-        await this.repoService.propertyApprovalRepo.save({
-          propertyId: id,
-          agentId: admin.id,
-          note: '',
-          status: ApprovalStatus.IN_REVIEW,
-        });
+      // check is the editor is admin
+      if (payload.user.roles.includes(AdminRole.ADMIN)) {
+        if (property.propertyNumber) {
+          await this.repoService.propertyRepo.update(
+            { id: id },
+            { status: PropertyStatus.APPROVED },
+          );
+        } else {
+          const propertyNumber =
+            await this.propertyApprovalService.generatePropertyNumber(property);
+          await this.repoService.propertyRepo.update(
+            { id: id },
+            { status: PropertyStatus.APPROVED, propertyNumber: propertyNumber },
+          );
+        }
+      } else {
+        const admins = await this.repoService.adminRepo.find();
+        for (const admin of admins) {
+          await this.repoService.propertyApprovalRepo.save({
+            propertyId: id,
+            agentId: admin.id,
+            note: '',
+            status: ApprovalStatus.IN_REVIEW,
+          });
+        }
       }
     }
     return {
       ...payload,
-      address: addressData,
+      address: payload.address,
       tags: savedTag,
       facilities: savedFacility,
       images: savedImage,
@@ -339,6 +386,21 @@ export class PropertyService {
     ]);
     await this.repoService.propertyRepo.update(id, {
       published: payload.published,
+    });
+    return property;
+  }
+
+  async updateAvailability(id: string, payload: UpdateAvailabilityDto) {
+    const property = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .where('property.id = :id', { id: id })
+      .getOne();
+    await Promise.all([
+      this.isPropertyExist(property),
+      this.isPropertyApproved(property),
+    ]);
+    await this.repoService.propertyRepo.update(id, {
+      availability: payload.availability,
     });
     return property;
   }
@@ -465,7 +527,7 @@ export class PropertyService {
           error_code: 'BAD_REQUEST',
           message: 'status is not allowed',
         },
-        HttpStatus.NOT_FOUND,
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -473,7 +535,6 @@ export class PropertyService {
   private async isUpdatePropertyAllowed(status: string) {
     const notAllowedStatus = [
       PropertyStatus.IN_REVIEW.toString(),
-      PropertyStatus.APPROVED.toString(),
       PropertyStatus.REJECTED.toString(),
     ];
     if (notAllowedStatus.includes(status)) {
@@ -483,13 +544,16 @@ export class PropertyService {
           error_code: 'BAD_REQUEST',
           message: 'status is not allowed',
         },
-        HttpStatus.NOT_FOUND,
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
 
-  private async isCreatedByAgent(userId: string, agentId: string) {
-    if (userId != agentId) {
+  private async isCreatedByAgentOrAdmin(user: AdminResponse, agentId: string) {
+    if (user.roles.includes(AdminRole.ADMIN)) {
+      return;
+    }
+    if (user.id != agentId) {
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,

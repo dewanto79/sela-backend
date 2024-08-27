@@ -12,11 +12,15 @@ import { UpdateAdminDto } from '../admin/dto/update-admin.dto';
 import { AgentService } from '../admin/agent.service';
 import { GenerateJWT } from './dto/generate-jwt.interface';
 import { AdminResponse } from '../admin/dto/response/admin.response';
+import { LoginGoogle } from './dto/login-admin.dto';
+import { HttpService } from '@nestjs/axios';
+import { catchError, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AuthAdminService {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly httpService: HttpService,
     private readonly adminService: AdminService,
     private readonly agentService: AgentService,
   ) {}
@@ -122,6 +126,45 @@ export class AuthAdminService {
           message: 'Error in updating admin',
         },
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  public async ssoGoogle(tokenGoogle: LoginGoogle) {
+    const token = tokenGoogle.token;
+    const { data } = await firstValueFrom(
+      this.httpService
+        .get(`https://www.googleapis.com/userinfo/v2/me?access_token=${token}`)
+        .pipe(
+          catchError(() => {
+            throw new HttpException(
+              {
+                status: HttpStatus.NOT_FOUND,
+                error_code: 'ADMIN_NOT_FOUND',
+                message: 'admin not exist',
+              },
+              HttpStatus.NOT_FOUND,
+            );
+          }),
+        ),
+    );
+
+    try {
+      let admin: AdminResponse;
+      try {
+        admin = await this.adminService.getByEmail(data.email);
+      } catch (error) {
+        admin = await this.agentService.getByEmail(data.email);
+      }
+      return await this.generateJwt({ ...admin } as GenerateJWT);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.UNAUTHORIZED,
+          errorCode: 'INVALID_CREDENTIALS',
+          message: 'Invalid credentials',
+        },
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }

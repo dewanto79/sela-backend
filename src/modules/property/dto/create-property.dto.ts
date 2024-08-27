@@ -1,4 +1,8 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -12,6 +16,7 @@ import {
 import { SellingType } from '../enums/selling-type.enum';
 import { PropertyStatus } from '../enums/property-status.enum';
 import { PropertyType } from '../enums/property-type.enum';
+import { AdminResponse } from 'src/modules/admin/dto/response/admin.response';
 
 class Tag {
   @ApiProperty({ nullable: false })
@@ -97,6 +102,9 @@ export class CreatePropertyDto {
   })
   @IsNotEmpty()
   price: number;
+
+  @ApiPropertyOptional({ default: 'IDR' })
+  currency: string;
 
   @ApiProperty({ default: PropertyStatus.DRAFT })
   @IsNotEmpty()
@@ -221,5 +229,5 @@ export class CreatePropertyDto {
   images: [Image];
 
   @ApiHideProperty()
-  userId: string;
+  user: AdminResponse;
 }

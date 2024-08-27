@@ -3,25 +3,22 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   Request,
-  UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
   Query,
   Put,
+  Req,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { AdminRole } from './enums/role.enum';
 import { AgentService } from './agent.service';
 import { AdminAuth, RolesAuth } from '../auth-admin/auth.decorator';
-import { CreateAdminDto } from './dto/create-admin.dto';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 
 @Controller('admin')
 @ApiTags('Admin Module')
@@ -82,6 +79,12 @@ export class AdminController {
   @RolesAuth(AdminRole.ADMIN)
   async register(@Body() payload: CreateAgentDto) {
     return await this.agentService.create(payload);
+  }
+
+  @RolesAuth(AdminRole.ADMIN)
+  @Put('self')
+  async updateAdmin(@Body() payload: UpdateAdminDto, @Req() req) {
+    return await this.adminService.update(req.user.id, payload);
   }
 
   @RolesAuth(AdminRole.ADMIN)

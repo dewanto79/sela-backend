@@ -10,6 +10,10 @@ export class FindPropertyGuestDto {
   keyword?: string;
 
   @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  currency?: string;
+
+  @ApiProperty({ required: false, nullable: true })
   @IsNumberString()
   @IsOptional()
   lowerPrice?: number;

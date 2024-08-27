@@ -10,6 +10,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   Delete,
+  Req,
 } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -20,6 +21,7 @@ import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FindPropertyDto } from './dto/find-property.dto';
 import { UpdatePublishedDto } from './dto/update-published.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 
 @Controller('property')
 @ApiTags('Property Module')
@@ -29,8 +31,7 @@ export class PropertyController {
   @RolesAuth(AdminRole.ADMIN, AdminRole.LISTING_AGENT)
   @Post()
   async create(@Body() payload: CreatePropertyDto, @Request() req) {
-    const userJwt = req.user;
-    payload.userId = userJwt.id;
+    payload.user = req.user;
     return await this.propertyService.create(payload);
   }
 
@@ -70,8 +71,7 @@ export class PropertyController {
     @Body() payload: UpdatePropertyDto,
     @Request() req,
   ) {
-    const userJwt = req.user;
-    payload.userId = userJwt.id;
+    payload.user = req.user;
     return await this.propertyService.update(id, payload);
   }
 
@@ -91,6 +91,17 @@ export class PropertyController {
     @Body() payload: UpdatePublishedDto,
   ) {
     return await this.propertyService.updatePublished(id, payload);
+  }
+
+  @RolesAuth(AdminRole.ADMIN, AdminRole.LISTING_AGENT)
+  @Put('availability/:id')
+  async updateAvailability(
+    @Param('id') id: string,
+    @Body() payload: UpdateAvailabilityDto,
+    @Req() req,
+  ) {
+    payload.userId = req.user.id;
+    return await this.propertyService.updateAvailability(id, payload);
   }
 
   @RolesAuth(AdminRole.ADMIN)

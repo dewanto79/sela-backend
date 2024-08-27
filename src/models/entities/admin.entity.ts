@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PropertyApproval } from './property-approval.entity';
+import { Property } from './property.entity';
 
 @Entity({ name: 'admins' })
 export class Admin extends BaseEntity {
@@ -77,4 +78,8 @@ export class Admin extends BaseEntity {
   @OneToMany(() => PropertyApproval, (approval) => approval.property)
   @JoinColumn({ name: 'id' })
   approvals?: PropertyApproval[];
+
+  @OneToMany(() => Property, (property) => property.agent)
+  @JoinColumn({ name: 'id' })
+  properties?: Property[];
 }

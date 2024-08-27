@@ -19,11 +19,20 @@ import { Facility } from './facility.entity';
 import { Address } from './address.entity';
 import { Agent } from './agent.entity';
 import { PropertyApproval } from './property-approval.entity';
+import { Admin } from './admin.entity';
+import { Currency } from './currency.entity';
 
 @Entity({ name: 'properties' })
 export class Property extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    name: 'currency_id',
+  })
+  currencyId: string;
 
   @Column({
     type: 'varchar',
@@ -303,7 +312,17 @@ export class Property extends BaseEntity {
   @JoinColumn({ name: 'agent_id' })
   agent: Agent;
 
+  @ManyToOne(() => Admin, (admin) => admin.properties)
+  @JoinColumn({ name: 'agent_id' })
+  admin: Admin;
+
   @OneToMany(() => PropertyApproval, (approval) => approval.property)
   @JoinColumn({ name: 'id' })
   approvals?: PropertyApproval[];
+
+  @ManyToOne(() => Currency, (currency) => currency.properties)
+  @JoinColumn({ name: 'currency_id' })
+  currency: Currency;
+
+  createdByName: string;
 }

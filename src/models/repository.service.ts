@@ -13,6 +13,7 @@ import { Agent } from './entities/agent.entity';
 import { Role } from './entities/role.entity';
 import { AgentRole } from './entities/agent-role.entity';
 import { PropertyApproval } from './entities/property-approval.entity';
+import { Currency } from './entities/currency.entity';
 
 @Injectable()
 export default class RepositoryService {
@@ -56,5 +57,8 @@ export default class RepositoryService {
 
     @InjectRepository(PropertyApproval)
     public readonly propertyApprovalRepo: Repository<PropertyApproval>,
+
+    @InjectRepository(Currency)
+    public readonly currencyRepo: Repository<Currency>,
   ) {}
 }

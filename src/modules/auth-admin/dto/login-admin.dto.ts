@@ -10,3 +10,9 @@ export class LoginAdminDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class LoginGoogle {
+  @ApiProperty()
+  @IsNotEmpty()
+  token: string;
+}

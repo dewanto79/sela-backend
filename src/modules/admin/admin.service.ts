@@ -10,6 +10,7 @@ import {
 } from 'nestjs-typeorm-paginate';
 import { AdminRole } from './enums/role.enum';
 import { AdminResponse } from './dto/response/admin.response';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -17,7 +18,7 @@ export class AdminService {
 
   async getByEmail(email: string): Promise<AdminResponse> {
     const admin = await this.repoService.adminRepo.findOne({
-      where: { email: email },
+      where: { email: email, status: 'active' },
       select: ['id', 'email', 'name', 'password', 'roles', 'status'],
     });
 
@@ -48,21 +49,27 @@ export class AdminService {
   }
 
   async update(id: string, payload: UpdateAdminDto) {
-    await this.findOne(id);
+    const admin = await this.findOne(id);
 
+    let hashedPassword = '';
+    if (payload.password && payload.password != '') {
+      hashedPassword = await bcrypt.hash(payload.password, 10);
+    }
     this.repoService.adminRepo.update(
       { id: id },
       {
         name: payload.name,
         email: payload.email,
-        roles: payload.roles,
-        password: payload.password,
-        status: payload.status,
+        password: hashedPassword == '' ? undefined : hashedPassword,
       },
     );
-    payload.password = undefined;
 
-    return payload;
+    return {
+      ...admin,
+      name: payload.name,
+      email: payload.email,
+      password: undefined,
+    };
   }
 
   async findAll(
