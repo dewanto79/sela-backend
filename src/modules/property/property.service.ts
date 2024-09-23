@@ -108,6 +108,7 @@ export class PropertyService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .addSelect(['images.updatedAt'])
       .leftJoin('property.currency', 'currency')
       .addSelect(['currency.id', 'currency.symbolNative'])
       .leftJoin('property.agent', 'agent')
@@ -118,8 +119,8 @@ export class PropertyService {
         new Brackets((qb) => {
           qb.where('LOWER(property.title) LIKE LOWER(:title)', {
             title: '%' + payload.keyword + '%',
-          }).orWhere('LOWER(property.number) LIKE LOWER(:number)', {
-            agentId: '%' + payload.keyword + '%',
+          }).orWhere('property.propertyNumber LIKE :number', {
+            number: '%' + payload.keyword + '%',
           });
         }),
       );
@@ -204,10 +205,6 @@ export class PropertyService {
       }
     }
 
-    data = data
-      .orderBy('property.updatedAt', 'DESC')
-      .addOrderBy('images.updatedAt', 'ASC');
-
     const totalItems = await data.getCount();
     const limit = options.limit;
     const page = options.page;
@@ -224,15 +221,21 @@ export class PropertyService {
         HttpStatus.NOT_FOUND,
       );
     }
-    const pairsData = await data
+    const propertyData = await data
       .take(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .getMany();
+    propertyData.forEach((data) =>
+      data.images.sort(
+        (a, b) =>
+          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+      ),
+    );
     const paginational = {
-      items: pairsData,
+      items: propertyData,
       meta: {
         totalItems: totalItems,
-        itemCount: pairsData.length,
+        itemCount: propertyData.length,
         itemsPerPage: limit,
         totalPages: Math.ceil(totalItems / Number(limit)),
         currentPage: Number(page),

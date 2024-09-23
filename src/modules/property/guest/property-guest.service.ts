@@ -20,7 +20,8 @@ export class PropertyGuestService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
-      .where('property.published = true');
+      .addSelect(['images.updatedAt'])
+      .where('property.published IS true');
 
     if (payload.keyword && payload.keyword != '') {
       data = data.andWhere('LOWER(property.title) LIKE LOWER(:title)', {
@@ -112,10 +113,6 @@ export class PropertyGuestService {
       });
     }
 
-    data = data
-      .orderBy('property.updatedAt', 'DESC')
-      .addOrderBy('images.updatedAt', 'ASC');
-
     const totalItems = await data.getCount();
     const limit = options.limit;
     const page = options.page;
@@ -132,15 +129,22 @@ export class PropertyGuestService {
         HttpStatus.NOT_FOUND,
       );
     }
-    const pairsData = await data
+    const propertyData = await data
       .take(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .getMany();
+    propertyData.forEach((data) =>
+      data.images.sort(
+        (a, b) =>
+          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+      ),
+    );
+
     const paginational = {
-      items: pairsData,
+      items: propertyData,
       meta: {
         totalItems: totalItems,
-        itemCount: pairsData.length,
+        itemCount: propertyData.length,
         itemsPerPage: limit,
         totalPages: Math.ceil(totalItems / Number(limit)),
         currentPage: Number(page),
