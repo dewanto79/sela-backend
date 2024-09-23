@@ -51,7 +51,7 @@ export class AgentService {
       .addSelect('roles.name');
 
     if (keyword && keyword != '') {
-      data.andWhere('agent.name ILIKE :name', {
+      data.andWhere('LOWER(agent.name) LIKE LOWER(:name)', {
         name: '%' + keyword + '%',
       });
     }

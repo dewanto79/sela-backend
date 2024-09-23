@@ -23,7 +23,7 @@ export class PropertyGuestService {
       .where('property.published = true');
 
     if (payload.keyword && payload.keyword != '') {
-      data = data.andWhere('property.title ILIKE :title', {
+      data = data.andWhere('LOWER(property.title) LIKE LOWER(:title)', {
         title: '%' + payload.keyword + '%',
       });
     }
@@ -112,6 +112,10 @@ export class PropertyGuestService {
       });
     }
 
+    data = data
+      .orderBy('property.updatedAt', 'DESC')
+      .addOrderBy('images.updatedAt', 'ASC');
+
     const totalItems = await data.getCount();
     const limit = options.limit;
     const page = options.page;
@@ -155,6 +159,7 @@ export class PropertyGuestService {
       .leftJoinAndSelect('property.images', 'images')
       .where('property.id = :id', { id: id })
       .andWhere('property.published = true')
+      .orderBy('images.updatedAt', 'ASC')
       .getOne();
     return await this.isPropertyExist(property);
   }

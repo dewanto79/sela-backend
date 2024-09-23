@@ -116,9 +116,9 @@ export class PropertyService {
     if (payload.keyword && payload.keyword != '') {
       data = data.andWhere(
         new Brackets((qb) => {
-          qb.where('property.title ILIKE :title', {
+          qb.where('LOWER(property.title) LIKE LOWER(:title)', {
             title: '%' + payload.keyword + '%',
-          }).orWhere('property.number ILIKE :number', {
+          }).orWhere('LOWER(property.number) LIKE LOWER(:number)', {
             agentId: '%' + payload.keyword + '%',
           });
         }),
@@ -204,6 +204,10 @@ export class PropertyService {
       }
     }
 
+    data = data
+      .orderBy('property.updatedAt', 'DESC')
+      .addOrderBy('images.updatedAt', 'ASC');
+
     const totalItems = await data.getCount();
     const limit = options.limit;
     const page = options.page;
@@ -250,6 +254,7 @@ export class PropertyService {
       .leftJoinAndSelect('property.agent', 'agent')
       .leftJoinAndSelect('property.admin', 'admin')
       .where('property.id = :id', { id: id })
+      .orderBy('images.updatedAt', 'ASC')
       .getOne();
     await this.isPropertyExist(property);
 

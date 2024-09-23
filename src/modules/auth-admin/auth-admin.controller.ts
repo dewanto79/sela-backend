@@ -18,11 +18,11 @@ export class AuthAdminController {
   //   return await this.authAdminService.register(payload);
   // }
 
-  @Post('login')
-  @UseGuards(AuthGuard('local'))
-  async login(@Body() body: LoginAdminDto, @Request() req) {
-    return await this.authAdminService.generateJwt(req.user);
-  }
+  // @Post('login')
+  // @UseGuards(AuthGuard('local'))
+  // async login(@Body() body: LoginAdminDto, @Request() req) {
+  //   return await this.authAdminService.generateJwt(req.user);
+  // }
 
   @Post('login/google')
   async loginGoogle(@Body() body: LoginGoogle): Promise<any> {

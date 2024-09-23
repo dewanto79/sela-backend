@@ -10,7 +10,7 @@ import {
 } from 'nestjs-typeorm-paginate';
 import { AdminRole } from './enums/role.enum';
 import { AdminResponse } from './dto/response/admin.response';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AdminService {
@@ -80,7 +80,7 @@ export class AdminService {
     const data = this.repoService.adminRepo.createQueryBuilder('admin');
 
     if (keyword && keyword != '') {
-      data.andWhere('admin.name ILIKE :name', {
+      data.andWhere('LOWER(admin.name) LIKE LOWER(:name)', {
         name: '%' + keyword + '%',
       });
     }

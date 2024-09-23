@@ -32,7 +32,7 @@ export class Tag extends BaseEntity {
 
   @CreateDateColumn({
     select: false,
-    type: 'timestamp with time zone',
+    type: 'timestamp',
     nullable: false,
     name: 'created_at',
   })
@@ -40,7 +40,7 @@ export class Tag extends BaseEntity {
 
   @UpdateDateColumn({
     select: false,
-    type: 'timestamp with time zone',
+    type: 'timestamp',
     nullable: false,
     name: 'updated_at',
   })
@@ -48,7 +48,7 @@ export class Tag extends BaseEntity {
 
   @DeleteDateColumn({
     select: false,
-    type: 'timestamp with time zone',
+    type: 'timestamp',
     nullable: false,
     name: 'deleted_at',
   })
