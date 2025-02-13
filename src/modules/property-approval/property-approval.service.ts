@@ -66,11 +66,7 @@ export class PropertyApprovalService {
     const lastApproved = await this.repoService.propertyRepo
       .createQueryBuilder('property')
       .where('property.property_number IS NOT NULL')
-      .orderBy(
-        `LENGTH(SUBSTRING(property.property_number, 0, POSITION('/' IN property.property_number) + 1))`,
-        'DESC',
-      )
-      .addOrderBy('property.property_number', 'DESC')
+      .orderBy('property.property_number + 0', 'DESC')
       .getOne();
 
     const number = lastApproved?.propertyNumber

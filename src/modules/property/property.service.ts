@@ -108,6 +108,7 @@ export class PropertyService {
       .leftJoinAndSelect('property.tags', 'tags')
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
+      .addSelect(['images.updatedAt'])
       .leftJoin('property.currency', 'currency')
       .addSelect(['currency.id', 'currency.symbolNative'])
       .leftJoin('property.agent', 'agent')
@@ -116,10 +117,10 @@ export class PropertyService {
     if (payload.keyword && payload.keyword != '') {
       data = data.andWhere(
         new Brackets((qb) => {
-          qb.where('property.title ILIKE :title', {
+          qb.where('LOWER(property.title) LIKE LOWER(:title)', {
             title: '%' + payload.keyword + '%',
-          }).orWhere('property.number ILIKE :number', {
-            agentId: '%' + payload.keyword + '%',
+          }).orWhere('property.propertyNumber LIKE :number', {
+            number: '%' + payload.keyword + '%',
           });
         }),
       );
@@ -220,15 +221,21 @@ export class PropertyService {
         HttpStatus.NOT_FOUND,
       );
     }
-    const pairsData = await data
+    const propertyData = await data
       .take(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .getMany();
+    propertyData.forEach((data) =>
+      data.images.sort(
+        (a, b) =>
+          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+      ),
+    );
     const paginational = {
-      items: pairsData,
+      items: propertyData,
       meta: {
         totalItems: totalItems,
-        itemCount: pairsData.length,
+        itemCount: propertyData.length,
         itemsPerPage: limit,
         totalPages: Math.ceil(totalItems / Number(limit)),
         currentPage: Number(page),
@@ -250,6 +257,7 @@ export class PropertyService {
       .leftJoinAndSelect('property.agent', 'agent')
       .leftJoinAndSelect('property.admin', 'admin')
       .where('property.id = :id', { id: id })
+      .orderBy('images.updatedAt', 'ASC')
       .getOne();
     await this.isPropertyExist(property);
 
