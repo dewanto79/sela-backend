@@ -6,11 +6,6 @@ import { CurrencyService } from '../currency/currency.service';
 export class CronjobService {
   public constructor(private readonly currencyService: CurrencyService) {}
 
-  @Timeout(5000)
-  handleTimeout() {
-    console.log('Called once after 5 seconds');
-  }
-
   //server running at UTC+0
   @Cron(CronExpression.EVERY_DAY_AT_5PM)
   handleUpdateCurrencyRate() {

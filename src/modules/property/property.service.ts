@@ -17,6 +17,41 @@ import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 import { AdminResponse } from '../admin/dto/response/admin.response';
 import { PropertyApprovalService } from '../property-approval/property-approval.service';
 
+const STOP_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'the',
+  'of',
+  'in',
+  'on',
+  'for',
+  'with',
+  'at',
+  'by',
+  'from',
+  'to',
+  'up',
+  'out',
+  'as',
+  'is',
+  'it',
+  'that',
+  'this',
+  'these',
+  'those',
+  'but',
+  'or',
+  'nor',
+  'so',
+  'yet',
+  'if',
+  'then',
+  'else',
+  'when',
+  'while',
+]);
+
 @Injectable()
 export class PropertyService {
   public constructor(
@@ -91,6 +126,12 @@ export class PropertyService {
         }
       }
     }
+
+    const slug = this.generateSlug(propertyData.id, propertyData.title);
+    await this.repoService.propertyRepo.update(
+      { id: propertyData.id },
+      { slug: slug },
+    );
 
     return {
       ...propertyData,
@@ -296,9 +337,12 @@ export class PropertyService {
       locationMaps: payload.address.locationMaps ?? null,
     });
 
+    const slug = this.generateSlug(id, payload.title);
+
     // update property
     await this.repoService.propertyRepo.update(id, {
       title: payload.title,
+      slug: slug,
       descriptionId: payload.descriptionId,
       keyFeatureId: payload.keyFeatureId,
       descriptionEn: payload.descriptionEn,
@@ -571,5 +615,30 @@ export class PropertyService {
         HttpStatus.NOT_FOUND,
       );
     }
+  }
+
+  private generateSlug(id: string, title: string) {
+    // 1. Lowercase and trim
+    let slug = title.toLowerCase().trim();
+
+    // 2. Replace all non-alphanumeric characters with space
+    slug = slug.replace(/[^a-z0-9]+/g, ' ');
+
+    // 3. Split words, filter out stop words
+    const words = slug
+      .split(/\s+/)
+      .filter((word) => word && !STOP_WORDS.has(word));
+
+    // 4. Join words with hyphen
+    slug = words.join('-');
+    slug = slug.replace(/^[-]+|[-]+$/g, '');
+
+    // 5. Limit length to 55 chars
+    if (slug.length > 55) {
+      slug = slug.substring(0, 55);
+      slug = slug.replace(/-+$/g, ''); // Remove trailing hyphens
+    }
+
+    return slug + '-' + id.substring(0, 5);
   }
 }

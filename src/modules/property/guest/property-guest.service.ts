@@ -24,10 +24,19 @@ export class PropertyGuestService {
       .where('property.published IS true');
 
     if (payload.keyword && payload.keyword != '') {
-      data = data.andWhere('LOWER(property.title) LIKE LOWER(:title)', {
-        title: '%' + payload.keyword + '%',
-      });
+      const words = payload.keyword.toLowerCase().split(' ');
+
+      data = data.andWhere(
+        new Brackets((qb) => {
+          for (const word of words) {
+            qb.andWhere('LOWER(property.title) LIKE :word', {
+              word: `%${word}%`,
+            });
+          }
+        }),
+      );
     }
+
     if (payload.lowerPrice || payload.higherPrice) {
       let currencyRates;
       if (payload.currency) {
@@ -141,7 +150,7 @@ export class PropertyGuestService {
     );
 
     const paginational = {
-      items: propertyData,
+      items: propertyData.map((data) => data.title),
       meta: {
         totalItems: totalItems,
         itemCount: propertyData.length,
@@ -162,6 +171,20 @@ export class PropertyGuestService {
       .leftJoinAndSelect('property.facilities', 'facilities')
       .leftJoinAndSelect('property.images', 'images')
       .where('property.id = :id', { id: id })
+      .andWhere('property.published = true')
+      .orderBy('images.updatedAt', 'ASC')
+      .getOne();
+    return await this.isPropertyExist(property);
+  }
+
+  async findOneBySlug(slug: string) {
+    const property = await this.repoService.propertyRepo
+      .createQueryBuilder('property')
+      .leftJoinAndSelect('property.address', 'address')
+      .leftJoinAndSelect('property.tags', 'tags')
+      .leftJoinAndSelect('property.facilities', 'facilities')
+      .leftJoinAndSelect('property.images', 'images')
+      .where('property.slug = :slug', { slug: slug })
       .andWhere('property.published = true')
       .orderBy('images.updatedAt', 'ASC')
       .getOne();
