@@ -150,7 +150,7 @@ export class PropertyGuestService {
     );
 
     const paginational = {
-      items: propertyData.map((data) => data.title),
+      items: propertyData,
       meta: {
         totalItems: totalItems,
         itemCount: propertyData.length,
