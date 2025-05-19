@@ -18,19 +18,19 @@ import { PropertyStatus } from '../enums/property-status.enum';
 import { PropertyType } from '../enums/property-type.enum';
 import { AdminResponse } from 'src/modules/admin/dto/response/admin.response';
 
-class Tag {
+export class Tag {
   @ApiProperty({ nullable: false })
   @IsNotEmpty({ message: 'name should not be empty' })
   name: string;
 }
 
-class Facility {
+export class Facility {
   @ApiProperty({ nullable: false })
   @IsNotEmpty({ message: 'name should not be empty' })
   name: string;
 }
 
-class Image {
+export class Image {
   @ApiProperty({ nullable: false, default: 'normal' })
   @IsNotEmpty({ message: 'type should not be empty' })
   type: string;
@@ -44,7 +44,7 @@ class Image {
   url: string;
 }
 
-class CreateAddressDto {
+export class CreateAddressDto {
   @ApiProperty({
     nullable: false,
   })

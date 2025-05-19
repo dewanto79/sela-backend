@@ -41,6 +41,13 @@ export class Property extends BaseEntity {
   title: string;
 
   @Column({
+    type: 'varchar',
+    nullable: true,
+    unique: true,
+  })
+  slug: string;
+
+  @Column({
     type: 'text',
     nullable: true,
     name: 'description_id',

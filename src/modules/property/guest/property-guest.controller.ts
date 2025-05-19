@@ -35,6 +35,11 @@ export class PropertyGuestController {
     );
   }
 
+  @Get('/slug/:slug')
+  async findOneBySlug(@Param('slug') slug: string) {
+    return await this.propertyGuestService.findOneBySlug(slug);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.propertyGuestService.findOne(id);
