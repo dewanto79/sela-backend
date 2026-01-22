@@ -4,10 +4,10 @@ import { SeederOptions } from 'typeorm-extension';
 
 dotenv.config();
 
-const dir = process.env.NODE_ENV == 'migration' ? 'src' : 'dist';
+const dir = 'src';
 const options: DataSourceOptions & SeederOptions = {
   host: process.env.DATABASE_HOST,
-  type: 'mysql',
+  type: 'postgres',
   port: Number(process.env.DATABASE_PORT),
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,

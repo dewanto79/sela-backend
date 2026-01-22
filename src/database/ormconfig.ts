@@ -3,7 +3,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 dotenv.config();
 
-const dir = process.env.NODE_ENV == 'migration' ? 'src' : 'dist';
+const dir = 'src';
 export default <TypeOrmModuleOptions>{
   type: process.env.DATABASE_CONNECTION,
   host: process.env.DATABASE_HOST,
